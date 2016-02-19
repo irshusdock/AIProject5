@@ -28,7 +28,9 @@ class Bag:
 		if(item in items):
 			items.remove(item)
 
-
+	def add_fit_limit(self, min, max):
+		self.min_items = min
+		self.max_items = max
 
 
 "Main script for the program"
@@ -43,6 +45,7 @@ def project5_main():
 	items = []
 	index = 0
 
+	"Parse the Items"
 	for line in file_content:
 		index = index + 1
 		if(line[0] == "#"):
@@ -54,14 +57,24 @@ def project5_main():
 	bags = []
 	index = 0
 
+	"Parse the Bags"
 	for line in file_content:
 		index = index + 1
 		if(line[0] == "#"):
 			break
 		bags.append(Bag(line[0], line[2]))
 		
+	file_content = file_content[index:]
 
+	"Add item fit constraints if there are any"
+	if(file_content[0] != "#"):
+		for bag in bags:
+			bag.add_fit_limit(file_content[0][0], file_content[0][2])
+		file_content = file_content[1:]
+	else:
+		file_content = file_content[0:]
 
+	index = 0
 
 if __name__ == '__main__':
 	project5_main()		
