@@ -4,10 +4,32 @@
 import sys
 
 
-class Variable:
+class Item:
 	def __init__(self, name, weight):
 		self.name = name
 		self.weight = weight
+
+	def set_bag(self, bag):
+		self.bag = bag
+
+	def get_bag(self):
+		return self.bag
+
+class Bag:
+	def __init__(self, name, weight):
+		self.name = name
+		self.weight = weight
+		self.items = []
+	
+	def add_item(self, item):
+		items.append(item)
+
+	def remove_item(self, item):
+		if(item in items):
+			items.remove(item)
+
+
+
 
 "Main script for the program"
 def project5_main():
@@ -18,16 +40,26 @@ def project5_main():
 	
 	file_content = file_content[1:]
 
-	variables = []
+	items = []
 	index = 0
 
 	for line in file_content:
+		index = index + 1
 		if(line[0] == "#"):
 			break
-		variables.append(Variable(line[0], line[2]))
+		items.append(Item(line[0], line[2]))
 
+	file_content = file_content[index:]
 
+	bags = []
+	index = 0
 
+	for line in file_content:
+		index = index + 1
+		if(line[0] == "#"):
+			break
+		bags.append(Bag(line[0], line[2]))
+		
 
 
 
