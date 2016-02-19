@@ -67,3 +67,28 @@ if __name__ == '__main__':
 	project5_main()		
 	
 	
+'''
+Pseudo code for the backtracking algorithm
+
+def backtrack( assignment, CSP)
+{
+	if (assignment is fully assigned)
+		return assignment
+	current_variable = select_unassigned (assignment)
+
+	for each value in order_domain_values (current_variable, assignment, CSP )
+		if value consistent with assignment 
+		{
+			assignment.add(current_variable = value)
+			inferences = inferene(CSP, current_variable, value)
+			if (inferences != failure) 
+			{
+				assignment.add(inferences)
+				result = backtrack(assignment, CSP)
+				if (result != failure)
+					return result
+			}
+		}
+}
+
+'''
