@@ -14,6 +14,11 @@ class Bag:
 		self.name = name
 		self.weight = weight
 
+class Capacity_Constraint:
+	def __init__(self):
+		self.lower_limit = 0.9
+		self.upper_limit = 1.0
+
 class Fit_Constraint:
 	def __init__(self, minimum, maximum):
 		self.min = minimum
@@ -79,6 +84,9 @@ def project5_main():
 		bags.append(Bag(line[0], line[2]))
 		
 	file_content = file_content[index:]
+
+	"Set the capacity constraints"
+	capacity_constraints = [Capacity_Constraint()]
 
 	fit_constraints = []
 
@@ -151,9 +159,6 @@ def project5_main():
 			break
 		temp = line.split(" ")
 		mutual_inclusive_constraints.append(Mutual_Inclusive_Constraint(temp[0], temp[1], temp[2], temp[3]))
-
-
-
 
 
 
