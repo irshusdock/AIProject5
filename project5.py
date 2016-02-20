@@ -317,13 +317,46 @@ def update_assignments(assignments, current_variable, value):
 			assignment.set_bag(value)
 			return
 
+'''
+class Constraint_Container:
+	def __init__(self, capacity_constraints, fit_constraints, unary_inclusive_constraints, unary_exclusive_constraints, 
+		binary_equals_constraints, binary_not_equals_constraints, mutual_inclusive_constraints):
+		self.capacity_constraints = capacity_constraints
+		self.fit_constraints = fit_constraints
+		self.unary_inclusive_constraints = unary_inclusive_constraints
+		self.unary_exclusive_constraints = unary_exclusive_constraints
+		self.binary_equals_constraints = binary_equals_constraints
+		self.binary_not_equals_constraints = binary_not_equals_constraints
+		self.mutual_inclusive_constraints = mutual_inclusive_constraints
+'''
+
 "Checks if the given variable assignments satisfy all problem constraints"
 "assignments is the list of item-bag assignments"
 "constraints is the set of combined constraints (for the entire problem)"
 "returns a boolean"
 def satisfies_constraints(assignments, constraints):
-	#TODO Implement this
-	return False
+	for capacity_constraint in constraints.capacity_constraints:
+		if (capacity_constraint.check_constraint() == False):
+			return False
+	for fit_constraint in constraints.fit_constraints:
+		if (fit_constraint.check_constraint() == False):
+			return False
+	for unary_inclusive_constraint in constraints.unary_inclusive_constraints:
+		if (unary_inclusive_constraint.check_constraint() == False):
+			return False
+	for unary_exclusive_constraint in constraints.unary_exclusive_constraints:
+		if (unary_exclusive_constraint.check_constraint() == False):
+			return False
+	for binary_equals_constraint in constraints.binary_equals_constraints:
+		if (binary_equals_constraint.check_constraint() == False):
+			return False
+	for binary_not_equals_constraint in constraints.binary_not_equals_constraints:
+		if (binary_not_equals_constraint.check_constraint() == False):
+			return False
+	for mutual_inclusive_constraint in constraints.mutual_inclusive_constraints:
+		if (mutual_inclusive_constraint.check_constraint() == False)
+			return False
+	return True
 
 "Run backtrack search on the passed assignment and constraints"
 "assignments is the list of item-bag assignments"
@@ -395,6 +428,12 @@ def backtrack( assignment, CSP)
 "Main script for the program"
 def project5_main():
 	
+	"Check for proper number of arguments"
+	if (len(sys.argv) < 2):
+		#TODO fill in proper usage
+		print("Usage is py project5.py ... ... ...")
+		sys.exit()
+
 	f = open(sys.argv[1])
 	file_content = f.readlines()
 	f.close()
