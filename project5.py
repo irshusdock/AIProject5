@@ -11,6 +11,8 @@ class Item:
 	def __init__(self, name, weight):
 		self.name = name
 		self.weight = weight
+		self.bag = ""
+		self.domain = []
 
 "Class for a bag. All bags have a name and a weight"
 "name is the name of the bag"
@@ -285,6 +287,8 @@ class Constraint_Container:
 		self.binary_equals_constraints = binary_equals_constraints
 		self.binary_not_equals_constraints = binary_not_equals_constraints
 		self.mutual_inclusive_constraints = mutual_inclusive_constraints
+
+	"Prints out all constraints"
 	def print_constraints(self):
 		for capacity_constraint in self.capacity_constraints:
 			capacity_constraint.print_out()
@@ -335,12 +339,15 @@ def select_unassigned(assignments):
 "assignments is the list of assignments of all variables so far"
 "constraints is the set of combined constraints (for the entire problem)"
 "returns a list"
-def get_domain_values(current_variable, assignments, constraints):
+def get_domain_values(current_variable, assignments, CSP):
 	print("Constructing domain for:" . current_variable)
 	domain = []
 
 	print(domain)
 	return domain
+
+"Order the domain values of the current variable"
+def order_domain_values(current_variable, assignments, CSP):
 
 "Return whether or not assigning a particular variable and particular value given a particular assignment causes an inconsistency"
 "Note: Some constraints may still not be satisfied, but it is important that contraints on variables (items) already assigned are satisfied"
@@ -414,8 +421,8 @@ def backtrack(assignments, constraints):
 	"Choose an unassigned variable"
 	current_variable = select_unassigned(assignments)
 
-	"Check every possible value that variable can take. If no value leads to a solution, there is no solution for the given assignment"
-	for value in get_domain_values(current_variable, assignments, constraints):
+	"Order the domain values for the chosen variable"
+	for value in order_domain_values(current_variable, assignments, constraints):
 
 		"Check if the value chosen is consistent with the rest of the assignments so far"
 		if (consistent_with_constraints(current_variable, value, assignments, constraints)):	
@@ -610,6 +617,7 @@ def project5_main():
 		temp = line.split(" ")
 		mutual_inclusive_constraints.append(Mutual_Inclusive_Constraint(temp[0], temp[1], temp[2], temp[3]))
 
+	"Make sure that all constraints were parsed correctly"
 	constraint_container.print_constraints()
 
 	"Update container"
