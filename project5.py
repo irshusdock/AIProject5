@@ -105,6 +105,25 @@ class Assignment:
 	"bag_name is the name of the bag to set"
 	def set_bag(self, bag_name):
 		this.bag_name = bag_name
+
+"Class to hold all problem constraints"
+"capacity_constraints is the list of capacity constraints"
+"fit_constraints is the list of fit constraints"
+"unary_inclusive_constraints is the list of unary inclusive constraints"
+"unary_exclusive_constraints is the list of unary exclusive constraints"
+"binary_equals_constraints is the list of binary equals constraints"
+"binary_not_equals_constraints is the list of binary not equals constraints"
+"mutual_inclusive_constraints is the list of mutual inclusive constraints"
+class Constraint_Container:
+	def __init__(self, capacity_constraints, fit_constraints, unary_inclusive_constraints, unary_exclusive_constraints, 
+		binary_equals_constraints, binary_not_equals_constraints, mutual_inclusive_constraints):
+		self.capacity_constraints = capacity_constraints
+		self.fit_constraints = fit_constraints
+		self.unary_inclusive_constraints = unary_inclusive_constraints
+		self.unary_exclusive_constraints = unary_exclusive_constraints
+		self.binary_equals_constraints = binary_equals_constraints
+		self.binary_not_equals_constraints = binary_not_equals_constraints
+		self.mutual_inclusive_constraints = mutual_inclusive_constraints
 	
 
 "Checks if all items have been assigned to bags"
@@ -158,7 +177,7 @@ def update_assignments(assignments, current_variable, value):
 			assignment.set_bag(value)
 			return
 
-"Checks if the given variable assignments satisfy all problem constrainsts"
+"Checks if the given variable assignments satisfy all problem constraints"
 "assignments is the list of item-bag assignments"
 "constraints is the set of combined constraints (for the entire problem)"
 "returns a boolean"
