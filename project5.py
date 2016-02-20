@@ -10,7 +10,7 @@ DEBUG = True
 class Item:
 	def __init__(self, name, weight):
 		self.name = name
-		self.weight = weight
+		self.weight = float(weight)
 		self.bag = ""
 		self.domain = []
 
@@ -20,7 +20,7 @@ class Item:
 class Bag:
 	def __init__(self, name, weight):
 		self.name = name
-		self.weight = weight
+		self.weight = float(weight)
 
 	"Return the bag name this constraint works on"
 	def get_name(self):
@@ -44,15 +44,16 @@ class Capacity_Constraint:
 		sum_weights = 0
 
 		for assignment in assignments:
-			if(assignment.get_bag() == self.bag.get_name()):
-				for item in items:
-					if(item.get_name() == assignment.get_name()):
-						sum_weights = sum_weights + item.get_weight()
-						break
-		if(sum_weights * 1.0/bag.get_weight() <= 1.0):
-			if(sum_weights * 1.0/bag.get_weight >= 0.9):
-				return True
-		return False
+			if (assignment.bag != None):
+				if(assignment.get_bag().get_name() == self.bag.get_name()):
+					for item in items:
+						if(item.name == assignment.item.name):
+							sum_weights = sum_weights + item.weight
+							break
+		if(sum_weights * 1.0/self.bag.weight <= 1.0):
+			if(sum_weights * 1.0/self.bag.weight < 0.9):
+				return False
+		return True
 
 	"Check to see if the bag is not over the weight capacity"
 	"assignments is the list of item-bag assignments"
@@ -60,9 +61,9 @@ class Capacity_Constraint:
 	"returns a boolean"
 	def check_upper_limit(self, assignments, items):
 		for assignment in assignments:
-			if(assignment.get_bag() == self.bag.get_name()):
+			if(assignment.get_bag().get_name() == self.bag.get_name()):
 				for item in items:
-					if(item.get_name() == assignment.get_name()):
+					if(item.get_name() == assignment.item.name):
 						sum_weights = sum_weights + item.get_weight()
 						break
 		if(sum_weights * 1.0/bag.get_weight() <= 1.0):
@@ -78,8 +79,8 @@ class Capacity_Constraint:
 "maximum is the maximum number of items that can be in a bag"
 class Fit_Constraint:
 	def __init__(self, bag, minimum, maximum):
-		self.min = minimum
-		self.max = maximum
+		self.min = float(minimum)
+		self.max = float(maximum)
 		self.bag = bag
 
 	"Check to see if the constraint holds with the given assignment"
@@ -89,10 +90,11 @@ class Fit_Constraint:
 	def check_constraint(self, assignments, items):
 		item_count = 0
 		for assignment in assignments:
-			if(assignment.get_bag() == self.bag.get_name()):
-				item_count = item_count + 1
-		if(item_count >= self.minimum):
-			if(item_count <= self.maximum):
+			if (assignment.bag != None):
+				if(assignment.get_bag().get_name() == self.bag.get_name()):
+					item_count = item_count + 1
+		if(item_count >= self.min):
+			if(item_count <= self.max):
 				return True
 		return False
 
@@ -103,7 +105,7 @@ class Fit_Constraint:
 	def check_upper_limit(self, assignments, items):
 		item_count = 0
 		for assignment in assignments:
-			if(assignment.get_bag() == self.bag.get_name()):
+			if(assignment.get_bag().get_name() == self.bag.get_name()):
 				item_count = item_count + 1
 		if(item_count <= self.maximum):
 			return True
@@ -125,8 +127,8 @@ class Unary_Inclusive_Constraint:
 	"returns a boolean"
 	def check_constraint(self, assignments):
 		for assignment in assignments:
-			if(assignment.get_name() == self.item_name):
-				if(assignment.get_bag() in self.list_of_bags):
+			if(assignment.get_item().name == self.item_name):
+				if(assignment.get_bag().get_name in self.list_of_bags_names):
 					return True
 				else:
 					return False
@@ -149,8 +151,8 @@ class Unary_Exclusive_Constraint:
 	"returns a boolean"
 	def check_constraint(self, assignments):
 		for assignment in assignments:
-			if(assignment.get_name() == self.item_name):
-				if(assignment.get_bag() in self.list_of_bags):
+			if(assignment.item.name == self.item_name):
+				if(assignment.get_bag().get_name() in self.list_of_bags):
 					return False
 				else:
 					return True
@@ -175,12 +177,12 @@ class Binary_Equals_Constraint:
 	"returns a boolean"
 	def check_constraint(self, assignments):
 		for assignment in assignments:
-			if(assignment.get_name() == self.item1_name):
+			if(assignment.item.name == self.item1_name):
 				bag1 = assignment.get_bag()
-			if(assignment.get_name() == self.item2_name):
+			if(assignment.item.name == self.item2_name):
 				bag2 = assignment.get_bag()
 
-		if((bag1 == bag2) or (bag1 == "")  or (bag2 == "")):
+		if((bag1.name == bag2.name) or (bag1.name == "")  or (bag2.name == "")):
 			return True
 		else:
 			return False
@@ -202,12 +204,12 @@ class Binary_Not_Equals_Constraint:
 	"returns a boolean"
 	def check_constraint(self, assignments):
 		for assignment in assignments:
-			if(assignment.get_name() == self.item1_name):
+			if(assignment.item.name == self.item1_name):
 				bag1 = assignment.get_bag()
-			if(assignment.get_name() == self.item2_name):
+			if(assignment.item.name == self.item2_name):
 				bag2 = assignment.get_bag()
 
-		if((bag1 != bag2) or (bag1 == "")  or (bag2 == "")):
+		if((bag1.name != bag2.name) or (bag1 == "")  or (bag2 == "")):
 			return True
 		else:
 			return False
@@ -233,12 +235,13 @@ class Mutual_Inclusive_Constraint:
 	"returns a boolean"
 	def check_constraint(self, assignments):
 		for assignment in assignments:
-			if(assignment.get_name() == self.item1_name):
+			if(assignment.item.name == self.item1_name):
 				bag1 = assignment.get_bag()
-			if(assignment.get_name() == self.item2_name):
+			if(assignment.item.name == self.item2_name):
 				bag2 = assignment.get_bag()
 
-		if(((bag1 == self.bag1_name) and (bag2 == self.bag2_name)) or ((bag1 == self.bag2_name) and (bag2 == self.bag1_name)) or (bag1 == "") or (bag2 == "")):
+		#TODO, revisit the logic in the last two or statements here
+		if(((bag1.name == self.bag1_name) and (bag2.name == self.bag2_name)) or ((bag1.name == self.bag2_name) and (bag2.name == self.bag1_name)) or (bag1 == "") or (bag2 == "")):
 			return True
 		else:
 			return False
@@ -264,9 +267,8 @@ class Assignment:
 	def get_item(self):
 		return self.item
 
-	"Set the value of the bag to the passed value"
-	"bag_name is the name of the bag to set"
-	def set_bag(self, bag_name):
+	"Set the value of the bag to the passed value, bag"
+	def set_bag(self, bag):
 		self.bag = bag
 
 "Class to hold all problem constraints"
@@ -345,8 +347,14 @@ def generate_domain_values(assignments, CSP):
 		domain = []
 		if (DEBUG):
 			print("Constructing domain for item:", item.name)
+
 		for bag in CSP.bags:
-			domain.append(bag)
+			update_assignments(assignments, item, bag)
+			if (consistent_with_constraints(item, bag, assignments, CSP)):
+				domain.append(bag)
+			else:
+				if (DEBUG):
+					print("Found contradiction. Not adding", bag.name, "to domain")
 		if (DEBUG):
 			print("Domain values for item", item.name, ":")
 			for bag in domain:
@@ -366,11 +374,11 @@ def order_domain_values(current_variable, assignments, CSP):
 "assignments is the list of current item-bag assignments"
 "constraints is the set of combined contraints (for the entire problem)"
 "returns a boolean"
-def consistent_with_constraints(current_variable, value, assignments, constraints):
-	for assignment in assignment:
-		if (assignment.get_name() == current_variable):
+def consistent_with_constraints(current_variable, value, assignments, CSP):
+	for assignment in assignments:
+		if (assignment.item.name == current_variable.name):
 			assignment.value = value
-			if (satisfies_constraints(assignments, constraints)):
+			if (satisfies_constraints(assignments, CSP)):
 				return True
 			else:
 				assignment.value = ""
@@ -382,36 +390,36 @@ def consistent_with_constraints(current_variable, value, assignments, constraint
 "current_variable is the variable (item) to update"
 "value is the value (bag) to assign to the variable (item)"
 "returns a list of assignments"
-def update_assignments(assignments, current_variable, value):
+def update_assignments(assignments, current_variable, bag):
 	for assignment in assignments:
-		if(assignment.get_name() == current_variable):
-			assignment.set_bag(value)
+		if(assignment.item.name == current_variable.name):
+			assignment.set_bag(bag)
 			return
 
 "Checks if the given variable assignments satisfy all problem constraints"
 "assignments is the list of item-bag assignments"
 "constraints is the set of combined constraints (for the entire problem)"
 "returns a boolean"
-def satisfies_constraints(assignments, constraints):
-	for capacity_constraint in constraints.capacity_constraints:
-		if (capacity_constraint.check_constraint() == False):
+def satisfies_constraints(assignments, CSP):
+	for capacity_constraint in CSP.constraint_container.capacity_constraints:
+		if (capacity_constraint.check_constraint(assignments, CSP.items) == False):
 			return False
-	for fit_constraint in constraints.fit_constraints:
-		if (fit_constraint.check_constraint() == False):
+	for fit_constraint in CSP.constraint_container.fit_constraints:
+		if (fit_constraint.check_constraint(assignments, CSP.items) == False):
 			return False
-	for unary_inclusive_constraint in constraints.unary_inclusive_constraints:
+	for unary_inclusive_constraint in CSP.constraint_container.unary_inclusive_constraints:
 		if (unary_inclusive_constraint.check_constraint() == False):
 			return False
-	for unary_exclusive_constraint in constraints.unary_exclusive_constraints:
+	for unary_exclusive_constraint in CSP.constraint_container.unary_exclusive_constraints:
 		if (unary_exclusive_constraint.check_constraint() == False):
 			return False
-	for binary_equals_constraint in constraints.binary_equals_constraints:
+	for binary_equals_constraint in CSP.constraint_container.binary_equals_constraints:
 		if (binary_equals_constraint.check_constraint() == False):
 			return False
-	for binary_not_equals_constraint in constraints.binary_not_equals_constraints:
+	for binary_not_equals_constraint in CSP.constraint_container.binary_not_equals_constraints:
 		if (binary_not_equals_constraint.check_constraint() == False):
 			return False
-	for mutual_inclusive_constraint in constraints.mutual_inclusive_constraints:
+	for mutual_inclusive_constraint in CSP.constraint_container.mutual_inclusive_constraints:
 		if (mutual_inclusive_constraint.check_constraint() == False):
 			return False
 	return True
@@ -427,7 +435,7 @@ def backtrack(assignments, CSP):
 
 	"If every variable has been assigned, check that the assignment satisfies all constraints. If the assignment does, return it"
 	if(fully_assigned(assignments)):
-		if(satisfies_constraints(assignments, CSP.constraint_container)):
+		if(satisfies_constraints(assignments, CSP)):
 			return assignments
 
 	"Choose an unassigned variable"
@@ -440,7 +448,7 @@ def backtrack(assignments, CSP):
 	for value in order_domain_values(current_variable, assignments, CSP.constraint_container):
 
 		"Check if the value chosen is consistent with the rest of the assignments so far"
-		if (consistent_with_constraints(current_variable, value, assignments, CSP.constraint_container)):	
+		if (consistent_with_constraints(current_variable, value, assignments, CSP)):	
 
 			"If it is consistent, assign the variable that value to run backtrack using the new assignment"
 			assignments = update_assignments(assignments, current_variable, value)
@@ -451,7 +459,7 @@ def backtrack(assignments, CSP):
 				return result
 
 			"Otherwise remove that item-bag assignment"
-			assignments.update_assignments(assignments, current_variable, "")
+			assignments.update_assignments(assignments, current_variable, None)
 		
 
 	"Return failure if all possible values have been checked. There is no solution for the given assignment"
@@ -610,7 +618,7 @@ def project5_main():
 
 	"Create a list of assignments, assigning each variable to start without a bag"
 	for item in items:
-		new_assignment = Assignment(item, '')
+		new_assignment = Assignment(item, None)
 		assignments.append(new_assignment)
 
 	#TODO
