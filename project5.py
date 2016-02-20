@@ -271,6 +271,12 @@ class Assignment:
 	def set_bag(self, bag):
 		self.bag = bag
 
+	def print_out(self):
+		if (self.bag is None):
+			print("Assignment: Item:", self.item.name, "Bag: No Bag")
+		else:
+			print("Assignment: Item:", self.item.name, "Bag:", self.bag.name)
+
 "Class to hold all problem constraints"
 "capacity_constraints is the list of capacity constraints"
 "fit_constraints is the list of fit constraints"
@@ -327,8 +333,8 @@ def fully_assigned(assignments):
 "returns a string"
 def select_unassigned(assignments):
 	for assignment in assignments:
-		if(assignment.get_bag() == ""):
-			return assignment.get_item()
+		if(assignment.get_bag() == None):
+			return assignment.item
 	#TODO add intelligent selection of items
 	#MRV
 	#Degree
@@ -343,7 +349,6 @@ def select_unassigned(assignments):
 "returns a list"
 def generate_domain_values(assignments, CSP):
 	for item in CSP.items:
-		#TODO Make this more intelligent
 		domain = []
 		if (DEBUG):
 			print("Constructing domain for item:", item.name)
@@ -364,6 +369,7 @@ def generate_domain_values(assignments, CSP):
 "Order the domain values of the current variable"
 "Return ordered domain"
 def order_domain_values(current_variable, assignments, CSP):
+	#TODO implement ordering schema
 	print("Ordering domain values")
 	return current_variable.domain
 
@@ -510,7 +516,6 @@ def project5_main():
 	CSP.items = items
 	"Reset file_content and index"
 	file_content = file_content[index:]
-	index = 0
 
 	"Parse the Bags"
 	for line in file_content:
@@ -533,7 +538,8 @@ def project5_main():
 	constraint_container.capacity_constraints = capacity_constraints
 
 	"Add item fit constraints if there are any"
-	if(file_content[0] != "#"):
+	if(file_content[0][0] != "#"):
+		print(file_content[0])
 		for bag in bags:
 			fit_constraints.append(Fit_Constraint(bag, file_content[0][0], file_content[0][2]))
 		file_content = file_content[2:]
