@@ -67,6 +67,8 @@ class Capacity_Constraint:
 			return True
 		return False
 
+	def print_out(self):
+		print("Capacity constraint: bag", self.bag.get_name())
 
 "Class for the number of items constraint of bags"
 "bag is the bag the constraint falls on"
@@ -105,6 +107,9 @@ class Fit_Constraint:
 			return True
 		return False
 
+	def print_out(self):
+		print("Fit Constraint: bag", self.bag.get_name(), " must have between", self.min, " and", self.max, "items")
+
 "Class for the unary inclusive constraints of items"
 "item_name is the name of the item the constraint pretains to"
 "list_of_bag_names is the list of bags that the item is allowed to be placed in"
@@ -124,6 +129,10 @@ class Unary_Inclusive_Constraint:
 				else:
 					return False
 
+	def print_out(self):
+		print("Unary Inclusive Constraint: Item", self.item_name, "must be placed in any of bags")
+		for bag in self.list_of_bag_names:
+			print(bag)
 
 "Class for the unary exclusive constraints of items"
 "item_name is the name of the item the constraint pretains to"
@@ -143,6 +152,11 @@ class Unary_Exclusive_Constraint:
 					return False
 				else:
 					return True
+
+	def print_out(self):
+		print("Unary Exclusive Constraint: Item", self.item_name, "cannot be placed in any of bags ")
+		for bag in self.list_of_bags:
+			print(bag)
 
 "Class for the binary equals constraints of items"
 "item1_name is the name of the first item"
@@ -169,6 +183,9 @@ class Binary_Equals_Constraint:
 		else:
 			return False
 
+	def print_out(self):
+		print("Binary Equals Constraint: Item", self.item1_name, "must be in the same bag as", self.item2_name, end="")
+
 "Class for the binary not equals constraints of items"
 "item1_name is the name of the first item"
 "item2_name is the name of the second item"
@@ -192,6 +209,9 @@ class Binary_Not_Equals_Constraint:
 			return True
 		else:
 			return False
+
+	def print_out(self):
+		print("Binary Not Equals Constraint: Item", self.item1_name, "cannot be in the same bag as", self.item2_name, end="")
 
 "Class for the mutual inclusive constraints"
 "item1_name is the name of the first item"
@@ -220,6 +240,9 @@ class Mutual_Inclusive_Constraint:
 			return True
 		else:
 			return False
+
+	def print_out(self):
+		print("Mutual Inclusive Constraint: If item", self.item1_name, "is in either bag", self.bag1_name, "or bag", self.bag2_name, "then item", self.item2_name, "must be in the other bag")
 
 "Class to represent the assignment of an item to a bag"
 "item_name is the name of the item to store"
@@ -262,6 +285,25 @@ class Constraint_Container:
 		self.binary_equals_constraints = binary_equals_constraints
 		self.binary_not_equals_constraints = binary_not_equals_constraints
 		self.mutual_inclusive_constraints = mutual_inclusive_constraints
+	def print_constraints(self):
+		for capacity_constraint in self.capacity_constraints:
+			capacity_constraint.print_out()
+		for fit_constraint in self.fit_constraints:
+			fit_constraint.print_out()
+		for unary_inclusive_constraint in self.unary_inclusive_constraints:
+			unary_inclusive_constraint.print_out()
+		for unary_exclusive_constraint in self.unary_exclusive_constraints:
+			unary_exclusive_constraint.print_out()
+		for binary_equals_constraint in self.binary_equals_constraints:
+			binary_equals_constraint.print_out()
+		for binary_not_equals_constraint in self.binary_not_equals_constraints:
+			binary_not_equals_constraint.print_out()
+
+class CSP_Full:
+	def __init__(self, items, bags, constraint_container):
+		self.items = items
+		self.bags = bags
+		self.constraints = constraint_container
 	
 "---------------------End Class definitions, begin function definitions---------------------"
 
@@ -282,6 +324,10 @@ def select_unassigned(assignments):
 		if(assignment.get_bag() == ""):
 			return assignment.get_item()
 	#TODO add intelligent selection of items
+	#MRV
+	#Degree
+	#LCV
+
 
 "Return the possible domain values for the given variable based on the contraints and the assignments so far"
 "Only checks domain based on unary inclusive and unary exclusive constraints"
@@ -435,6 +481,11 @@ def project5_main():
 	binary_not_equals_constraints = []
 	mutual_inclusive_constraints = []
 
+	constraint_container = Constraint_Container(capacity_constraints, fit_constraints, unary_inclusive_constraints, unary_exclusive_constraints, 
+		binary_equals_constraints, binary_not_equals_constraints, mutual_inclusive_constraints)
+
+	CSP = CSP_Full(items, bags, constraint_container)
+
 	"Check for proper number of arguments"
 	if (len(sys.argv) < 2):
 		#TODO fill in proper usage
@@ -456,8 +507,10 @@ def project5_main():
 			break
 		items.append(Item(line[0], line[2]))
 
+	"Update CSP"
+	CSP.items = items
+	"Reset file_content and index"
 	file_content = file_content[index:]
-
 	index = 0
 
 	"Parse the Bags"
@@ -467,11 +520,18 @@ def project5_main():
 			break
 		bags.append(Bag(line[0], line[2]))
 		
+	"Update CSP"
+	CSP.bags = bags
+	"Reset file_content and index"
 	file_content = file_content[index:]
+	index = 0
 
 	"Set the capacity constraints"
 	for bag in bags:
 		capacity_constraints.append(Capacity_Constraint(bag))
+
+	"Update constraint_container"
+	constraint_container.capacity_constraints = capacity_constraints
 
 	"Add item fit constraints if there are any"
 	if(file_content[0] != "#"):
@@ -481,7 +541,9 @@ def project5_main():
 	else:
 		file_content = file_content[1:]
 	
-	
+	"Update constraint_container"
+	constraint_container.fit_constraints = fit_constraints
+	"Reset index"
 	index = 0
 
 	"Add unary inclusive constraints if any"
@@ -492,8 +554,10 @@ def project5_main():
 		temp = line.split(" ")
 		unary_inclusive_constraints.append(Unary_Inclusive_Constraint(temp[0], temp[1:]))
 
+	"Update constraint_container"
+	constraint_container.unary_inclusive_constraints = unary_inclusive_constraints
+	"Reset file_content and index"
 	file_content = file_content[index:]
-
 	index = 0
 
 	"Add unary exclusive constraints if any"
@@ -504,8 +568,10 @@ def project5_main():
 		temp = line.split(" ")
 		unary_exclusive_constraints.append(Unary_Exclusive_Constraint(temp[0], temp[1:]))
 
+	"Update constraint_container"
+	constraint_container.unary_exclusive_constraints = unary_exclusive_constraints
+	"Reset file_content and index"
 	file_content = file_content[index:]
-
 	index = 0
 
 	"Add binary equals constraints if any"
@@ -516,8 +582,10 @@ def project5_main():
 		temp = line.split(" ")
 		binary_equals_constraints.append(Binary_Equals_Constraint(temp[0], temp[1]))
 
+	"Update constraint_container"
+	constraint_container.binary_equals_constraints = binary_equals_constraints
+	"Reset file_content and index"
 	file_content = file_content[index:]
-
 	index = 0
 
 	"Add binary not equals constraints if any"
@@ -528,8 +596,10 @@ def project5_main():
 		temp = line.split(" ")
 		binary_not_equals_constraints.append(Binary_Not_Equals_Constraint(temp[0], temp[1]))
 
+	"Update constraint_container"
+	constraint_container.binary_not_equals_constraints = binary_not_equals_constraints
+	"Reset file_content and index"
 	file_content = file_content[index:]
-
 	index = 0
 
 	"Add mutual inclusive constraints if any"
@@ -540,10 +610,10 @@ def project5_main():
 		temp = line.split(" ")
 		mutual_inclusive_constraints.append(Mutual_Inclusive_Constraint(temp[0], temp[1], temp[2], temp[3]))
 
+	constraint_container.print_constraints()
 
-	"Add all constraints to a container"
-	constraint_container = Constraint_Container(capacity_constraints, fit_constraints, unary_inclusive_constraints, unary_exclusive_constraints, 
-		binary_equals_constraints, binary_not_equals_constraints, mutual_inclusive_constraints)
+	"Update container"
+	CSP.constraint_container = constraint_container
 
 	"Create a list of assignments, assigning each variable to start without a bag"
 	for item in items:
