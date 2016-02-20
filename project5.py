@@ -290,8 +290,11 @@ def select_unassigned(assignments):
 "constraints is the set of combined constraints (for the entire problem)"
 "returns a list"
 def get_domain_values(current_variable, assignments, constraints):
-	#TODO implement this
-	return []
+	print("Constructing domain for:" . current_variable)
+	domain = []
+
+	print(domain)
+	return domain
 
 "Return whether or not assigning a particular variable and particular value given a particular assignment causes an inconsistency"
 "Note: Some constraints may still not be satisfied, but it is important that contraints on variables (items) already assigned are satisfied"
@@ -322,19 +325,6 @@ def update_assignments(assignments, current_variable, value):
 			assignment.set_bag(value)
 			return
 
-'''
-class Constraint_Container:
-	def __init__(self, capacity_constraints, fit_constraints, unary_inclusive_constraints, unary_exclusive_constraints, 
-		binary_equals_constraints, binary_not_equals_constraints, mutual_inclusive_constraints):
-		self.capacity_constraints = capacity_constraints
-		self.fit_constraints = fit_constraints
-		self.unary_inclusive_constraints = unary_inclusive_constraints
-		self.unary_exclusive_constraints = unary_exclusive_constraints
-		self.binary_equals_constraints = binary_equals_constraints
-		self.binary_not_equals_constraints = binary_not_equals_constraints
-		self.mutual_inclusive_constraints = mutual_inclusive_constraints
-'''
-
 "Checks if the given variable assignments satisfy all problem constraints"
 "assignments is the list of item-bag assignments"
 "constraints is the set of combined constraints (for the entire problem)"
@@ -359,7 +349,7 @@ def satisfies_constraints(assignments, constraints):
 		if (binary_not_equals_constraint.check_constraint() == False):
 			return False
 	for mutual_inclusive_constraint in constraints.mutual_inclusive_constraints:
-		if (mutual_inclusive_constraint.check_constraint() == False)
+		if (mutual_inclusive_constraint.check_constraint() == False):
 			return False
 	return True
 
@@ -433,6 +423,18 @@ def backtrack( assignment, CSP)
 "Main script for the program"
 def project5_main():
 	
+	items = []
+	bags = []
+	assignments = []
+
+	capacity_constraints = []
+	fit_constraints = []
+	unary_inclusive_constraints = []
+	unary_exclusive_constraints = []
+	binary_equals_constraints = []
+	binary_not_equals_constraints = []
+	mutual_inclusive_constraints = []
+
 	"Check for proper number of arguments"
 	if (len(sys.argv) < 2):
 		#TODO fill in proper usage
@@ -445,7 +447,6 @@ def project5_main():
 	
 	file_content = file_content[1:]
 
-	items = []
 	index = 0
 
 	"Parse the Items"
@@ -457,7 +458,6 @@ def project5_main():
 
 	file_content = file_content[index:]
 
-	bags = []
 	index = 0
 
 	"Parse the Bags"
@@ -470,12 +470,8 @@ def project5_main():
 	file_content = file_content[index:]
 
 	"Set the capacity constraints"
-	capacity_constraints = []
-
 	for bag in bags:
 		capacity_constraints.append(Capacity_Constraint(bag))
-
-	fit_constraints = []
 
 	"Add item fit constraints if there are any"
 	if(file_content[0] != "#"):
@@ -485,7 +481,7 @@ def project5_main():
 	else:
 		file_content = file_content[1:]
 	
-	unary_inclusive_constraints = []
+	
 	index = 0
 
 	"Add unary inclusive constraints if any"
@@ -498,7 +494,6 @@ def project5_main():
 
 	file_content = file_content[index:]
 
-	unary_exclusive_constraints = []
 	index = 0
 
 	"Add unary exclusive constraints if any"
@@ -511,7 +506,6 @@ def project5_main():
 
 	file_content = file_content[index:]
 
-	binary_equals_constraints = []
 	index = 0
 
 	"Add binary equals constraints if any"
@@ -524,7 +518,6 @@ def project5_main():
 
 	file_content = file_content[index:]
 
-	binary_not_equals_constraints = []
 	index = 0
 
 	"Add binary not equals constraints if any"
@@ -537,7 +530,6 @@ def project5_main():
 
 	file_content = file_content[index:]
 
-	mutual_inclusive_constraints = []
 	index = 0
 
 	"Add mutual inclusive constraints if any"
@@ -549,10 +541,16 @@ def project5_main():
 		mutual_inclusive_constraints.append(Mutual_Inclusive_Constraint(temp[0], temp[1], temp[2], temp[3]))
 
 
-	#TODO
-	"Create a list of assignments, assigning each variable to no bag (\"\")"
-	"Compile the set of constraints"
+	"Add all constraints to a container"
+	constraint_container = Constraint_Container(capacity_constraints, fit_constraints, unary_inclusive_constraints, unary_exclusive_constraints, 
+		binary_equals_constraints, binary_not_equals_constraints, mutual_inclusive_constraints)
 
+	"Create a list of assignments, assigning each variable to start without a bag"
+	for item in items:
+		new_assignment = Assignment(item.name, '')
+		assignments.append(new_assignment)
+
+	#TODO
 	"Run backtrace using the blank assignments and the set of contraints"
 
 	"Handle output"
