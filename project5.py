@@ -20,22 +20,90 @@ class Bag:
 		self.name = name
 		self.weight = weight
 
+	"Return the bag name this constraint works on"
+	def get_name(self):
+		return self.name
+
 "Class for the weight capacity constraint of bags"
+"bag is the bag the constraint falls on"
 "All bags must be at least 90% filled (by weight)"
 "All bags must be at most 100% filled (by weight)"
 class Capacity_Constraint:
-	def __init__(self):
+	def __init__(self, bag):
 		self.lower_limit = 0.9
 		self.upper_limit = 1.0
+		self.bag = bag
+
+	"Check to see if the constraint holds with the given assignment"
+	"assignments is the list of item-bag assignments"
+	"items is the list of Item objects"
+	"returns a boolean"
+	def check_constraint(self, assignments, items):
+		sum_weights = 0
+
+		for assignment in assignments:
+			if(assignment.get_bag() == self.bag.get_name()):
+				for item in items:
+					if(item.get_name() == assignment.get_name()):
+						sum_weights = sum_weights + item.get_weight()
+						break
+		if(sum_weights * 1.0/bag.get_weight() <= 1.0):
+			if(sum_weights * 1.0/bag.get_weight >= 0.9):
+				return True
+		return False
+
+	"Check to see if the bag is not over the weight capacity"
+	"assignments is the list of item-bag assignments"
+	"items is the list of Item objects"
+	"returns a boolean"
+	def check_upper_limit(self, assignments, items):
+		for assignment in assignments:
+			if(assignment.get_bag() == self.bag.get_name()):
+				for item in items:
+					if(item.get_name() == assignment.get_name()):
+						sum_weights = sum_weights + item.get_weight()
+						break
+		if(sum_weights * 1.0/bag.get_weight() <= 1.0):
+			return True
+		return False
 
 
 "Class for the number of items constraint of bags"
+"bag is the bag the constraint falls on"
 "minimum is the minimum number of items that must be in a bag"
 "maximum is the maximum number of items that can be in a bag"
 class Fit_Constraint:
-	def __init__(self, minimum, maximum):
+	def __init__(self, bag, minimum, maximum):
 		self.min = minimum
 		self.max = maximum
+		self.bag = bag
+
+	"Check to see if the constraint holds with the given assignment"
+	"assignments is the list of item-bag assignments"
+	"items is the list of Item objects"
+	"returns a boolean"
+	def check_constraint(self, assignments, items):
+		item_count = 0
+		for assignment in assignments:
+			if(assignment.get_bag() == self.bag.get_name()):
+				item_count = item_count + 1
+		if(item_count >= self.minimum):
+			if(item_count <= self.maximum):
+				return True
+		return False
+
+	"Check to see if the bag is not over the item limit capacity"
+	"assignments is the list of item-bag assignments"
+	"items is the list of Item objects"
+	"returns a boolean"
+	def check_upper_limit(self, assignments, items):
+		item_count = 0
+		for assignment in assignments:
+			if(assignment.get_bag() == self.bag.get_name()):
+				item_count = item_count + 1
+		if(item_count <= self.maximum):
+			return True
+		return False
 
 "Class for the unary inclusive constraints of items"
 "item_name is the name of the item the constraint pretains to"
@@ -45,6 +113,18 @@ class Unary_Inclusive_Constraint:
 		self.item_name = item_name
 		self.list_of_bag_names = list_of_bag_names
 
+	"Check to see if the constraint holds with the given assignment"
+	"assignments is the list of item-bag assignments"
+	"returns a boolean"
+	def check_constraint(self, assignments):
+		for assignment in assignments:
+			if(assignment.get_name() == self.item_name):
+				if(assignment.get_bag() in self.list_of_bags):
+					return True
+				else:
+					return False
+
+
 "Class for the unary exclusive constraints of items"
 "item_name is the name of the item the constraint pretains to"
 "list_of_bag_names is the list of bags that the item is NOT allowed to be placed in"
@@ -52,6 +132,17 @@ class Unary_Exclusive_Constraint:
 	def __init__(self, item_name, list_of_bags):
 		self.item_name = item_name
 		self.list_of_bags = list_of_bags
+
+	"Check to see if the constraint holds with the given assignment"
+	"assignments is the list of item-bag assignments"
+	"returns a boolean"
+	def check_constraint(self, assignments):
+		for assignment in assignments:
+			if(assignment.get_name() == self.item_name):
+				if(assignment.get_bag() in self.list_of_bags):
+					return False
+				else:
+					return True
 
 "Class for the binary equals constraints of items"
 "item1_name is the name of the first item"
@@ -62,6 +153,22 @@ class Binary_Equals_Constraint:
 		self.item1_name = item1_name
 		self.item2_name = item2_name
 
+
+	"Check to see if the constraint holds with the given assignment"
+	"assignments is the list of item-bag assignments"
+	"returns a boolean"
+	def check_constraint(self, assignments):
+		for assignment in assignments:
+			if(assignment.get_name() == self.item1_name):
+				bag1 = assignment.get_bag()
+			if(assignment.get_name() == self.item2_name):
+				bag2 = assignment.get_bag()
+
+		if((bag1 == bag2) or (bag1 == "")  or (bag2 == "")):
+			return True
+		else:
+			return False
+
 "Class for the binary not equals constraints of items"
 "item1_name is the name of the first item"
 "item2_name is the name of the second item"
@@ -70,6 +177,21 @@ class Binary_Not_Equals_Constraint:
 	def __init__(self, item1_name, item2_name):
 		self.item1_name = item1_name
 		self.item2_name = item2_name
+
+	"Check to see if the constraint holds with the given assignment"
+	"assignments is the list of item-bag assignments"
+	"returns a boolean"
+	def check_constraint(self, assignments):
+		for assignment in assignments:
+			if(assignment.get_name() == self.item1_name):
+				bag1 = assignment.get_bag()
+			if(assignment.get_name() == self.item2_name):
+				bag2 = assignment.get_bag()
+
+		if((bag1 != bag2) or (bag1 == "")  or (bag2 == "")):
+			return True
+		else:
+			return False
 
 "Class for the mutual inclusive constraints"
 "item1_name is the name of the first item"
@@ -83,6 +205,21 @@ class Mutual_Inclusive_Constraint:
 		self.item2_name = item2_name
 		self.bag1_name = bag1_name
 		self.bag2_name = bag2_name
+
+	"Check to see if the constraint holds with the given assignment"
+	"assignments is the list of item-bag assignments"
+	"returns a boolean"
+	def check_constraint(self, assignments):
+		for assignment in assignments:
+			if(assignment.get_name() == self.item1_name):
+				bag1 = assignment.get_bag()
+			if(assignment.get_name() == self.item2_name):
+				bag2 = assignment.get_bag()
+
+		if(((bag1 == self.bag1_name) and (bag2 == self.bag2_name)) or ((bag1 == self.bag2_name) and (bag2 == self.bag1_name)) or (bag1 == "") or (bag2 == "")):
+			return True
+		else:
+			return False
 
 "Class to represent the assignment of an item to a bag"
 "item_name is the name of the item to store"
@@ -213,16 +350,13 @@ def backtrack(assignments, constraints):
 			assignments = update_assignments(assignments, current_variable, value)
 			result = backtrack(assignments, constraints)
 			
-			'''
 			"If backtrack returns an assignment, we have found a solution so cascade up"
 			if(result != "failure"):
 				return result
 
 			"Otherwise remove that item-bag assignment"
 			assignments.update_assignments(assignments, current_variable, "")
-			'''
-		else:
-			assignments.update_assignments(assignments, current_variable, "")
+		
 
 	"Return failure if all possible values have been checked. There is no solution for the given assignment"
 	return "failure"
@@ -292,13 +426,17 @@ def project5_main():
 	file_content = file_content[index:]
 
 	"Set the capacity constraints"
-	capacity_constraints = [Capacity_Constraint()]
+	capacity_constraints = []
+
+	for bag in bags:
+		capacity_constraints.append(Capacity_Constraint(bag))
 
 	fit_constraints = []
 
 	"Add item fit constraints if there are any"
 	if(file_content[0] != "#"):
-		fit_constraints.append(Fit_Constraint(file_content[0][0], file_content[0][2]))
+		for bag in bags:
+			fit_constraints.append(Fit_Constraint(bag, file_content[0][0], file_content[0][2]))
 		file_content = file_content[2:]
 	else:
 		file_content = file_content[1:]
