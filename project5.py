@@ -301,9 +301,14 @@ def get_domain_values(current_variable, assignments, constraints):
 "constraints is the set of combined contraints (for the entire problem)"
 "returns a boolean"
 def consistent_with_constraints(current_variable, value, assignments, constraints):
-	#TODO Implement this
-	#Note: check max item limit (for assigned bag), max weight limit (for assigned bag), and item-bag assignment constraints that affect this item
-	#Item bag assignment constraints refers to unary contraints and binary constraints
+	for assignment in assignment:
+		if (assignment.get_name() == current_variable):
+			assignment.value = value
+			if (satisfies_constraints(assignments, constraints)):
+				return True
+			else:
+				assignment.value = ""
+				return False
 	return False
 
 "Returns the passed list of assignments after updating the assignment of the passed variable"
