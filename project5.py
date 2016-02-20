@@ -126,10 +126,11 @@ class Constraint_Container:
 		self.binary_not_equals_constraints = binary_not_equals_constraints
 		self.mutual_inclusive_constraints = mutual_inclusive_constraints
 	
+"---------------------End Class definitions, begin function definitions---------------------"
 
-"Checks if all items have been assigned to bags"
+"Checks if all items have been assigned to bag"
 "assignment is a list of item-bag Assignments"
-"returns a boolean"
+"returns a boolean "
 def fully_assigned(assignments):
 	for assignment in assignments:
 		if(assignment.get_bag() == ""):
@@ -143,6 +144,7 @@ def select_unassigned(assignments):
 	for assignment in assignments:
 		if(assignment.get_bag() == ""):
 			return assignment.get_item()
+	#TODO add intelligent selection of items
 
 "Return the possible domain values for the given variable based on the contraints and the assignments so far"
 "Only checks domain based on unary inclusive and unary exclusive constraints"
@@ -205,17 +207,21 @@ def backtrack(assignments, constraints):
 	for value in get_domain_values(current_variable, assignments, constraints):
 
 		"Check if the value chosen is consistent with the rest of the assignments so far"
-		if (consistent_with_constraints(current_variable, value, assignments, constraints)):
+		if (consistent_with_constraints(current_variable, value, assignments, constraints)):	
 
 			"If it is consistent, assign the variable that value to run backtrack using the new assignment"
 			assignments = update_assignments(assignments, current_variable, value)
 			result = backtrack(assignments, constraints)
 			
+			'''
 			"If backtrack returns an assignment, we have found a solution so cascade up"
 			if(result != "failure"):
 				return result
 
 			"Otherwise remove that item-bag assignment"
+			assignments.update_assignments(assignments, current_variable, "")
+			'''
+		else:
 			assignments.update_assignments(assignments, current_variable, "")
 
 	"Return failure if all possible values have been checked. There is no solution for the given assignment"
@@ -234,6 +240,7 @@ def backtrack( assignment, CSP)
 		if value consistent with assignment 
 		{
 			assignment.add(current_variable = value)
+			//Everything involving the inferences is apparently optional
 			inferences = inferene(CSP, current_variable, value)
 			if (inferences != failure) 
 			{
@@ -242,6 +249,10 @@ def backtrack( assignment, CSP)
 				if (result != failure)
 					return result
 			}
+		}
+		else
+		{
+			remove assigned value and inferences
 		}
 }
 
