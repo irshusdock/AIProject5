@@ -96,8 +96,111 @@ class Assignment:
 	"Return the bag_name of the assignment"
 	def get_bag(self):
 		return this.bag_name
+
+	"Return the item_name of the assignment"
+	def get_item(self):
+		return this.item_name
+
+	"Set the value of the bag to the passed value"
+	"bag_name is the name of the bag to set"
+	def set_bag(self, bag_name):
+		this.bag_name = bag_name
 	
-	
+
+"Checks if all items have been assigned to bags"
+"assignment is a list of item-bag Assignments"
+"returns a boolean"
+def fully_assigned(assignments):
+	for assignment in assignments:
+		if(assignment.get_bag() == ""):
+			return False
+	return True
+
+"Return an unassigned variable name from the assignment list"
+"assignments is the list of assignments of variables"
+"returns a string"
+def select_unassigned(assignments):
+	for assignment in assignments:
+		if(assignment.get_bag() == ""):
+			return assignment.get_item()
+
+"Return the possible domain values for the given variable based on the contraints and the assignments so far"
+"Only checks domain based on unary inclusive and unary exclusive constraints"
+"current_variable is the name of the variable to get the domain of"
+"assignments is the list of assignments of all variables so far"
+"constraints is the set of combined constraints (for the entire problem)"
+"returns a list"
+def get_domain_values(current_variable, assignments, constraints):
+	#TODO implement this
+	return []
+
+"Return whether or not assigning a particular variable and particular value given a particular assignment causes an inconsistency"
+"Note: Some constraints may still not be satisfied, but it is important that contraints on variables (items) already assigned are satisfied"
+"current_variable is the variable to be assigned (i.e. item)"
+"value is the value to assign to that variable (i.e. bag)"
+"assignments is the list of current item-bag assignments"
+"constraints is the set of combined contraints (for the entire problem)"
+"returns a boolean"
+def consistent_with_constraints(current_variable, value, assignments, constraints):
+	#TODO Implement this
+	#Note: check max item limit (for assigned bag), max weight limit (for assigned bag), and item-bag assignment constraints that affect this item
+	#Item bag assignment constraints refers to unary contraints and binary constraints
+	return False
+
+"Returns the passed list of assignments after updating the assignment of the passed variable"
+"assignments is the current list of item-bag assignments to update"
+"current_variable is the variable (item) to update"
+"value is the value (bag) to assign to the variable (item)"
+"returns a list of assignments"
+def update_assignments(assignments, current_variable, value):
+	for assignment in assignments:
+		if(assignment.get_name() == current_variable):
+			assignment.set_bag(value)
+			return
+
+"Checks if the given variable assignments satisfy all problem constrainsts"
+"assignments is the list of item-bag assignments"
+"constraints is the set of combined constraints (for the entire problem)"
+"returns a boolean"
+def satisfies_constraints(assignments, constraints):
+	#TODO Implement this
+	return False
+
+"Run backtrack search on the passed assignment and constraints"
+"assignments is the list of item-bag assignments"
+"constraints is the set of combined constraints (for the entire problem)"
+"returns \"failure\" if there is no possible solution with the given assignments"
+"returns a list of assignments if that list satisfies all problem constraints"
+def backtrack(assignments, constraints):
+
+	"If every variable has been assigned, check that the assignment satisfies all constraints. If the assignment does, return it"
+	if(fully_assigned(assignments)):
+		if(satisfies_constraints(assignments, constraints)):
+			return assignments
+
+	"Choose an unassigned variable"
+	current_variable = select_unassigned(assignments)
+
+	"Check every possible value that variable can take. If no value leads to a solution, there is no solution for the given assignment"
+	for value in get_domain_values(current_variable, assignments, constraints):
+
+		"Check if the value chosen is consistent with the rest of the assignments so far"
+		if (consistent_with_constraints(current_variable, value, assignments, constraints)):
+
+			"If it is consistent, assign the variable that value to run backtrack using the new assignment"
+			assignments = update_assignments(assignments, current_variable, value)
+			result = backtrack(assignments, constraints)
+			
+			"If backtrack returns an assignment, we have found a solution so cascade up"
+			if(result != "failure"):
+				return result
+
+			"Otherwise remove that item-bag assignment"
+			assignments.update_assignments(assignments, current_variable, "")
+
+	"Return failure if all possible values have been checked. There is no solution for the given assignment"
+	return "failure"
+
 '''
 Pseudo code for the backtracking algorithm
 
@@ -123,26 +226,6 @@ def backtrack( assignment, CSP)
 }
 
 '''
-
-"Checks if all items have been assigned to bags"
-"assignment is a list of item-bag Assignments"
-def fully_assigned(assignments):
-	for assignment in assignments:
-		if(assignment.get_bag() == ""):
-			return False
-	return True
-
-"Return an unassigned variable name from the assignment list"
-"assignments is the list of assignments of variables"
-def select_unassigned(assignments):
-	for assignment in assignments:
-		if()
-
-def backtrack(assignments, constraints):
-	if(fully_assigned(assignments)):
-		return assignments
-	current_variable = select_unassigned(assignments)
-
 
 "Main script for the program"
 def project5_main():
@@ -253,6 +336,15 @@ def project5_main():
 		mutual_inclusive_constraints.append(Mutual_Inclusive_Constraint(temp[0], temp[1], temp[2], temp[3]))
 
 
+	#TODO
+	"Create a list of assignments, assigning each variable to no bag (\"\")"
+	"Compile the set of constraints"
+
+	"Run backtrace using the blank assignments and the set of contraints"
+
+	"Handle output"
+
+	#End TODO
 
 if __name__ == '__main__':
 	project5_main()		
