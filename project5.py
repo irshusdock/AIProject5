@@ -28,6 +28,7 @@ class Capacity_Constraint:
 		self.lower_limit = 0.9
 		self.upper_limit = 1.0
 
+
 "Class for the number of items constraint of bags"
 "minimum is the minimum number of items that must be in a bag"
 "maximum is the maximum number of items that can be in a bag"
