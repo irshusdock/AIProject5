@@ -2,7 +2,7 @@
 "Alexi Kessler & Ian Shusdock"
 
 import sys
-
+DEBUG = True
 
 "Class for an item. All items have a name and a weight"
 "name is the name of the item"
@@ -186,7 +186,7 @@ class Binary_Equals_Constraint:
 			return False
 
 	def print_out(self):
-		print("Binary Equals Constraint: Item", self.item1_name, "must be in the same bag as", self.item2_name, end="")
+		print("Binary Equals Constraint: Item", self.item1_name, "must be in the same bag as", self.item2_name, end='')
 
 "Class for the binary not equals constraints of items"
 "item1_name is the name of the first item"
@@ -252,22 +252,22 @@ class Mutual_Inclusive_Constraint:
 "An instance of this class states that we are storing item_name in bag_name"
 "If bag_name is the empty string, that means the item has yet to be assigned"
 class Assignment:
-	def __init__(self, item_name, bag_name):
-		self.item_name = item_name
-		self.bag_name = bag_name
+	def __init__(self, item, bag):
+		self.item = item
+		self.bag = bag
 
-	"Return the bag_name of the assignment"
+	"Return the bag of the assignment"
 	def get_bag(self):
-		return this.bag_name
+		return self.bag
 
-	"Return the item_name of the assignment"
+	"Return the item of the assignment"
 	def get_item(self):
-		return this.item_name
+		return self.item
 
 	"Set the value of the bag to the passed value"
 	"bag_name is the name of the bag to set"
 	def set_bag(self, bag_name):
-		this.bag_name = bag_name
+		self.bag = bag
 
 "Class to hold all problem constraints"
 "capacity_constraints is the list of capacity constraints"
@@ -339,15 +339,25 @@ def select_unassigned(assignments):
 "assignments is the list of assignments of all variables so far"
 "constraints is the set of combined constraints (for the entire problem)"
 "returns a list"
-def get_domain_values(current_variable, assignments, CSP):
-	print("Constructing domain for:" . current_variable)
-	domain = []
-
-	print(domain)
-	return domain
+def generate_domain_values(assignments, CSP):
+	for item in CSP.items:
+		#TODO Make this more intelligent
+		domain = []
+		if (DEBUG):
+			print("Constructing domain for item:", item.name)
+		for bag in CSP.bags:
+			domain.append(bag)
+		if (DEBUG):
+			print("Domain values for item", item.name, ":")
+			for bag in domain:
+				print("Bag:", bag.get_name())
+		return domain
 
 "Order the domain values of the current variable"
+"Return ordered domain"
 def order_domain_values(current_variable, assignments, CSP):
+	print("Ordering domain values")
+	return current_variable.domain
 
 "Return whether or not assigning a particular variable and particular value given a particular assignment causes an inconsistency"
 "Note: Some constraints may still not be satisfied, but it is important that contraints on variables (items) already assigned are satisfied"
@@ -411,25 +421,30 @@ def satisfies_constraints(assignments, constraints):
 "constraints is the set of combined constraints (for the entire problem)"
 "returns \"failure\" if there is no possible solution with the given assignments"
 "returns a list of assignments if that list satisfies all problem constraints"
-def backtrack(assignments, constraints):
+def backtrack(assignments, CSP):
+
+	print ("Running backtrack")
 
 	"If every variable has been assigned, check that the assignment satisfies all constraints. If the assignment does, return it"
 	if(fully_assigned(assignments)):
-		if(satisfies_constraints(assignments, constraints)):
+		if(satisfies_constraints(assignments, CSP.constraint_container)):
 			return assignments
 
 	"Choose an unassigned variable"
 	current_variable = select_unassigned(assignments)
 
+	"Generate domain values for the chosen variable variable"
+	generate_domain_values(assignments, CSP)
+
 	"Order the domain values for the chosen variable"
-	for value in order_domain_values(current_variable, assignments, constraints):
+	for value in order_domain_values(current_variable, assignments, CSP.constraint_container):
 
 		"Check if the value chosen is consistent with the rest of the assignments so far"
-		if (consistent_with_constraints(current_variable, value, assignments, constraints)):	
+		if (consistent_with_constraints(current_variable, value, assignments, CSP.constraint_container)):	
 
 			"If it is consistent, assign the variable that value to run backtrack using the new assignment"
 			assignments = update_assignments(assignments, current_variable, value)
-			result = backtrack(assignments, constraints)
+			result = backtrack(assignments, CSP.constraint_container)
 			
 			"If backtrack returns an assignment, we have found a solution so cascade up"
 			if(result != "failure"):
@@ -441,37 +456,6 @@ def backtrack(assignments, constraints):
 
 	"Return failure if all possible values have been checked. There is no solution for the given assignment"
 	return "failure"
-
-'''
-Pseudo code for the backtracking algorithm
-
-def backtrack( assignment, CSP)
-{
-	if (assignment is fully assigned)
-		return assignment
-	current_variable = select_unassigned (assignment)
-
-	for each value in order_domain_values (current_variable, assignment, CSP )
-		if value consistent with assignment 
-		{
-			assignment.add(current_variable = value)
-			//Everything involving the inferences is apparently optional
-			inferences = inferene(CSP, current_variable, value)
-			if (inferences != failure) 
-			{
-				assignment.add(inferences)
-				result = backtrack(assignment, CSP)
-				if (result != failure)
-					return result
-			}
-		}
-		else
-		{
-			remove assigned value and inferences
-		}
-}
-
-'''
 
 "Main script for the program"
 def project5_main():
@@ -618,18 +602,21 @@ def project5_main():
 		mutual_inclusive_constraints.append(Mutual_Inclusive_Constraint(temp[0], temp[1], temp[2], temp[3]))
 
 	"Make sure that all constraints were parsed correctly"
-	constraint_container.print_constraints()
+	if (DEBUG):
+		constraint_container.print_constraints()
 
 	"Update container"
 	CSP.constraint_container = constraint_container
 
 	"Create a list of assignments, assigning each variable to start without a bag"
 	for item in items:
-		new_assignment = Assignment(item.name, '')
+		new_assignment = Assignment(item, '')
 		assignments.append(new_assignment)
 
 	#TODO
 	"Run backtrace using the blank assignments and the set of contraints"
+	backtrack(assignments, CSP)
+
 
 	"Handle output"
 
