@@ -32,7 +32,7 @@ class Bag:
 "All bags must be at most 100% filled (by weight)"
 class Capacity_Constraint:
 	def __init__(self, bag):
-		self.lower_limit = 0.9
+		self.lower_limit = 0.0
 		self.upper_limit = 1.0
 		self.bag = bag
 
@@ -51,9 +51,10 @@ class Capacity_Constraint:
 							sum_weights = sum_weights + item.weight
 							break
 		if(sum_weights/self.bag.weight <= 1.0):
-			if(sum_weights/self.bag.weight < 0.9):
-				return False
-		return True
+			return True
+		if (DEBUG):
+				print("Capacity check constraint failed with ratio", sum_weights/self.bag.weight)
+		return False
 
 	"Check to see if the bag is not over the weight capacity"
 	"assignments is the list of item-bag assignments"
@@ -69,9 +70,10 @@ class Capacity_Constraint:
 						if(item.name == assignment.item.name):
 							sum_weights = sum_weights + item.weight
 							break
-		print("The fucking ratio is", sum_weights/self.bag.weight, "for Bag", self.bag.name, "with weight", self.bag.weight)
 		if(sum_weights/self.bag.weight <= 1.0):
 			return True
+		if (DEBUG):
+				print("Capacity check upper limit failed with ratio", sum_weights/self.bag.weight)
 		return False
 
 	def print_out(self):
@@ -83,8 +85,8 @@ class Capacity_Constraint:
 "maximum is the maximum number of items that can be in a bag"
 class Fit_Constraint:
 	def __init__(self, bag, minimum, maximum):
-		self.min = float(minimum)
-		self.max = float(maximum)
+		self.min = int(minimum)
+		self.max = int(maximum)
 		self.bag = bag
 
 	"Check to see if the constraint holds with the given assignment"
@@ -99,6 +101,8 @@ class Fit_Constraint:
 					item_count = item_count + 1
 		if(item_count >= self.min):
 			if(item_count <= self.max):
+				if (DEBUG):
+					print("Passed fit constraint with item_count", item_count, "with max:", self.max)
 				return True
 		return False
 
@@ -113,6 +117,8 @@ class Fit_Constraint:
 				if(assignment.get_bag().get_name() == self.bag.get_name()):
 					item_count = item_count + 1
 		if(item_count <= self.max):
+			if (DEBUG):
+				print("Passed fit constraint with item_count", item_count, "with max:", self.max)
 			return True
 		return False
 
@@ -133,9 +139,11 @@ class Unary_Inclusive_Constraint:
 	def check_constraint(self, assignments):
 		for assignment in assignments:
 			if(assignment.get_item().name == self.item_name):
-				if(assignment.get_bag().get_name in self.list_of_bags_names):
+				if(assignment.bag.name in self.list_of_bag_names):
 					return True
 				else:
+					for val in self.list_of_bag_names:
+						print(val)
 					return False
 
 	def print_out(self):
@@ -245,10 +253,31 @@ class Mutual_Inclusive_Constraint:
 			if(assignment.item.name == self.item2_name):
 				bag2 = assignment.get_bag()
 
-		if(((bag1.name == self.bag1_name) and (bag2.name == self.bag2_name)) or ((bag1.name == self.bag2_name) and (bag2.name == self.bag1_name)) or (bag1 == None) or (bag2 == None)):
-			return True
-		else:
+		#If item1 is in bag1 and item2 is not in bag2
+		#or if item1 is in bag2 and item2 is not in bag1
+		#or if item2 is in bag1 and item1 is not in bag2
+		#or if item2 is in bag2 and item1 is not in bag 1
+		if((bag1.name == self.bag1_name) and (bag2.name != self.bag2_name)):
+			if (DEBUG):
+				print("Failed mutual inclusive constraint")
+				self.print_out()
 			return False
+		if((bag1.name == self.bag2_name) and (bag2.name != self.bag1_name)):
+			if (DEBUG):
+				print("Failed mutual inclusive constraint")
+				self.print_out()
+			return False
+		if((bag2.name == self.bag1_name) and (bag1.name != self.bag2_name)):
+			if (DEBUG):
+				print("Failed mutual inclusive constraint")
+				self.print_out()
+			return False
+		if((bag2.name == self.bag2_name) and (bag1.name != self.bag1_name)):
+			if (DEBUG):
+				print("Failed mutual inclusive constraint")
+				self.print_out()
+			return False
+		return True
 
 	def print_out(self):
 		print("Mutual Inclusive Constraint: If item", self.item1_name, "is in either bag", self.bag1_name, "or bag", self.bag2_name, "then item", self.item2_name, "must be in the other bag")
@@ -314,6 +343,8 @@ class Constraint_Container:
 			binary_equals_constraint.print_out()
 		for binary_not_equals_constraint in self.binary_not_equals_constraints:
 			binary_not_equals_constraint.print_out()
+		for mutual_inclusive_constraint in self.mutual_inclusive_constraints:
+			mutual_inclusive_constraint.print_out()
 
 class CSP_Full:
 	def __init__(self, items, bags, constraint_container):
@@ -381,43 +412,55 @@ def order_domain_values(current_variable, assignments, CSP):
 def consistent_with_constraints(current_variable, value, assignments, CSP):
 	print("Running consistency checking")
 	assigned_variables = []
+
+	assignments = update_assignments(assignments, current_variable, value)
+
+	print("--Checking consistent with constraints--")
 	for assignment in assignments:
 		if (assignment.bag != None):
 			assigned_variables.append(assignment.item.name)
 
 	for capacity_constraint in CSP.constraint_container.capacity_constraints:
 		if (capacity_constraint.check_upper_limit(assignments, CSP.items) == False):
+			assignments = update_assignments(assignments, current_variable, None)
 			return False
 	print("Passed all capacity_constraints")
 	for fit_constraint in CSP.constraint_container.fit_constraints:
 		if (fit_constraint.check_upper_limit(assignments, CSP.items) == False):
+			assignments = update_assignments(assignments, current_variable, None)
 			return False
 	print("Passed all fits_constraints")
 	for unary_inclusive_constraint in CSP.constraint_container.unary_inclusive_constraints:
 		if (unary_inclusive_constraint.item_name in assigned_variables):	
-			if (unary_inclusive_constraint.check_constraint() == False):
+			if (unary_inclusive_constraint.check_constraint(assignments) == False):
+				assignments = update_assignments(assignments, current_variable, None)
 				return False
 	print("Passed all unary_inclusive_constraints")
 	for unary_exclusive_constraint in CSP.constraint_container.unary_exclusive_constraints:
 		if (unary_exclusive_constraint.item_name in assigned_variables):
-			if (unary_exclusive_constraint.check_constraint() == False):
+			if (unary_exclusive_constraint.check_constraint(assignments) == False):
+				assignments = update_assignments(assignments, current_variable, None)
 				return False
 	print("Passed all unary_exclusive_constraints")
 	for binary_equals_constraint in CSP.constraint_container.binary_equals_constraints:
 		if ((binary_equals_constraint.item1_name in assigned_variables) and (binary_equals_constraint.item2_name in assigned_variables)):
-			if (binary_equals_constraint.check_constraint() == False):
+			if (binary_equals_constraint.check_constraint(assignments) == False):
+				assignments = update_assignments(assignments, current_variable, None)
 				return False
 	print("Passed all binary_equals_constraints")
 	for binary_not_equals_constraint in CSP.constraint_container.binary_not_equals_constraints:
 		if ((binary_not_equals_constraint.item1_name in assigned_variables) and (binary_not_equals_constraint.item2_name in assigned_variables)):
-			if (binary_not_equals_constraint.check_constraint() == False):
+			if (binary_not_equals_constraint.check_constraint(assignments) == False):
+				assignments = update_assignments(assignments, current_variable, None)
 				return False
 	print("Passed all binary_not_equals_constraint")
 	for mutual_inclusive_constraint in CSP.constraint_container.mutual_inclusive_constraints:
 		if ((mutual_inclusive_constraint.item1_name in assigned_variables) and (mutual_inclusive_constraint.item2_name in assigned_variables)):
-			if (mutual_inclusive_constraint.check_constraint() == False):
+			if (mutual_inclusive_constraint.check_constraint(assignments) == False):
+				assignments = update_assignments(assignments, current_variable, None)
 				return False
 	print("Passed all mutual_inclusive_constraints")
+	print("--Passed consistent with constraints--")
 	return True
 
 "Returns the passed list of assignments after updating the assignment of the passed variable"
@@ -436,27 +479,36 @@ def update_assignments(assignments, current_variable, bag):
 "constraints is the set of combined constraints (for the entire problem)"
 "returns a boolean"
 def satisfies_constraints(assignments, CSP):
+	print("--Checking satisfies constraints--")
 	for capacity_constraint in CSP.constraint_container.capacity_constraints:
 		if (capacity_constraint.check_constraint(assignments, CSP.items) == False):
 			return False
+	print("Passed all capacity_constraints")
 	for fit_constraint in CSP.constraint_container.fit_constraints:
 		if (fit_constraint.check_constraint(assignments, CSP.items) == False):
 			return False
+	print("Passed all fit_constraints")
 	for unary_inclusive_constraint in CSP.constraint_container.unary_inclusive_constraints:
-		if (unary_inclusive_constraint.check_constraint() == False):
+		if (unary_inclusive_constraint.check_constraint(assignments) == False):
 			return False
+	print("Passed all unary_inclusive_constraints")
 	for unary_exclusive_constraint in CSP.constraint_container.unary_exclusive_constraints:
-		if (unary_exclusive_constraint.check_constraint() == False):
+		if (unary_exclusive_constraint.check_constraint(assignments) == False):
 			return False
+	print("Passed all unary_exclusive_constraints")
 	for binary_equals_constraint in CSP.constraint_container.binary_equals_constraints:
-		if (binary_equals_constraint.check_constraint() == False):
+		if (binary_equals_constraint.check_constraint(assignments) == False):
 			return False
+	print("Passed all binary_equals_constraints")
 	for binary_not_equals_constraint in CSP.constraint_container.binary_not_equals_constraints:
-		if (binary_not_equals_constraint.check_constraint() == False):
+		if (binary_not_equals_constraint.check_constraint(assignments) == False):
 			return False
+	print("Passed all binary_not_equals_constraints")
 	for mutual_inclusive_constraint in CSP.constraint_container.mutual_inclusive_constraints:
-		if (mutual_inclusive_constraint.check_constraint() == False):
+		if (mutual_inclusive_constraint.check_constraint(assignments) == False):
 			return False
+	print("Passed all mutual_inclusive_constraints")
+	print("--Passed satisfies constraints--")
 	return True
 
 "Run backtrack search on the passed assignment and constraints"
@@ -491,6 +543,8 @@ def backtrack(assignments, CSP):
 
 			"If it is consistent, assign the variable that value to run backtrack using the new assignment"
 			assignments = update_assignments(assignments, current_variable, value)
+			if (DEBUG):
+				print("Assigned Item", current_variable.name, "to Bag", value.name)
 			result = backtrack(assignments, CSP)
 			
 			"If backtrack returns an assignment, we have found a solution so cascade up"
@@ -501,9 +555,10 @@ def backtrack(assignments, CSP):
 
 			"Otherwise remove that item-bag assignment"
 			assignments = update_assignments(assignments, current_variable, None)
-		
+			
 		else:
-			print("Failed to assign Item", current_variable.name, "to Bag", value.name)
+			if (DEBUG):
+				print("Failed to assign Item", current_variable.name, "to Bag", value.name)
 	if (DEBUG):
 		print("Failed with assignments")
 		for assignment in assignments:
@@ -553,7 +608,7 @@ def project5_main():
 		index = index + 1
 		if(line[0] == "#"):
 			break
-		temp = line.split(" ")
+		temp = line.rstrip("\n").split(" ")
 		items.append(Item(temp[0], temp[1]))
 
 	"Update CSP"
@@ -567,7 +622,7 @@ def project5_main():
 		index = index + 1
 		if(line[0] == "#"):
 			break
-		temp = line.split(" ")
+		temp = line.rstrip("\n").split(" ")
 		bags.append(Bag(temp[0], temp[1]))
 		
 	"Update CSP"
@@ -601,7 +656,7 @@ def project5_main():
 		index = index + 1
 		if(line[0] == "#"):
 			break
-		temp = line.split(" ")
+		temp = line.rstrip("\n").split(" ")
 		unary_inclusive_constraints.append(Unary_Inclusive_Constraint(temp[0], temp[1:]))
 
 	"Update constraint_container"
@@ -615,7 +670,7 @@ def project5_main():
 		index = index + 1
 		if(line[0] == "#"):
 			break
-		temp = line.split(" ")
+		temp = line.rstrip("\n").split(" ")
 		unary_exclusive_constraints.append(Unary_Exclusive_Constraint(temp[0], temp[1:]))
 
 	"Update constraint_container"
@@ -629,7 +684,7 @@ def project5_main():
 		index = index + 1
 		if(line[0] == "#"):
 			break
-		temp = line.split(" ")
+		temp = line.rstrip("\n").split(" ")
 		binary_equals_constraints.append(Binary_Equals_Constraint(temp[0], temp[1]))
 
 	"Update constraint_container"
@@ -643,7 +698,7 @@ def project5_main():
 		index = index + 1
 		if(line[0] == "#"):
 			break
-		temp = line.split(" ")
+		temp = line.rstrip("\n").split(" ")
 		binary_not_equals_constraints.append(Binary_Not_Equals_Constraint(temp[0], temp[1]))
 
 	"Update constraint_container"
@@ -657,7 +712,7 @@ def project5_main():
 		index = index + 1
 		if(line[0] == "#"):
 			break
-		temp = line.split(" ")
+		temp = line.rstrip("\n").split(" ")
 		mutual_inclusive_constraints.append(Mutual_Inclusive_Constraint(temp[0], temp[1], temp[2], temp[3]))
 
 	"Make sure that all constraints were parsed correctly"

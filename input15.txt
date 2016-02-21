@@ -10,6 +10,7 @@ b 3
 ##### - unary inclusive
 ##### - unary exclusive
 ##### - binary equals
-B C D
+B C 
+C D
 ##### - binary not equals
 ##### - binary simultaneous
