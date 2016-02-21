@@ -359,15 +359,102 @@ def fully_assigned(assignments):
 	return True
 
 "Return an unassigned variable name from the assignment list"
+"Naive variable choosing"
 "assignments is the list of assignments of variables"
-"returns a string"
+"returns an item"
 def select_unassigned(assignments):
 	for assignment in assignments:
 		if(assignment.get_bag() == None):
 			return assignment.item
+		
+
+"Return an unassigned variable name from the assignment list"
+"MRV + Degree Heuristic"
+"assignments is the list of assignments of variables"
+"CSP is the constraint satisfaction problem"
+"returns an item"
+def select_unassigned_mrv(assignments, CSP):
+	unassigned_vars = []
+
+	for assignment in assignments:
+		if(assignment.get_bag() == None):
+			unassigned_vars.append(assignment.item)
+
+	min_value = sys.maxsize
+	for variable in unassigned_vars:
+		temp = number_of_legal_values(variable, assignments, CSP)
+		if(temp < min_value):
+			min_variable = variable
+			min_value = temp
+		if(temp == min_value):
+			degree_of_temp = degree_of_var(variable, unassigned_vars, CSP)
+			degree_of_min = degree_of_var(min_variable, unassigned_vars, CSP)
+			if(degree_of_temp > degree_of_min):
+				min_variable = variable
+				min_value = temp
+		#TODO degree heuristic goes here to break ties
+	return min_variable
+
+"Determine the number of legal values a given variable can have based on the current assignment"
+"variable is the variable to check legal values for"
+"assignments is the current assignments to check with"
+"CSP is the constraint satisfaction problem"
+def number_of_legal_values(variable, assignments, CSP):
+
+	sum_values = 0
+
+	for bag in CSP.bags:
+		if(consistent_with_constraints(variable, bag, assignments, CSP)):
+			sum_values = sum_values + 1
+
+	return sum_values
+
+"Determine the number of unassigned vars that have constraints with the passed variable"
+"variable is the variable to check the degree of"
+"unassigned_vars is the list of unassigned variables"
+"CSP is the constraint satisfaction problem"
+def degree_of_var(variable, unassigned_vars, CSP):
+
+	degree = 0
+	for unassigned_var in unassigned_vars:
+		is_part_of_constraint = False
+
+		for constraint in CSP.constraints.binary_equals_constraints:
+
+			"Short circuting"
+			if(is_part_of_constraint):
+				break
+
+			names_in_constraint = [constraint.item1_name, constraint.item2_name]
+			if((unassigned_var.name in names_in_constraint) and (variable.name in names_in_constraint)):
+				is_part_of_constraint = True
+
+		for constraint in CSP.constraints.binary_not_equals_constraints:
+
+			"Short circuting"
+			if(is_part_of_constraint):
+				break
+
+			names_in_constraint = [constraint.item1_name, constraint.item2_name]
+			if((unassigned_var.name in names_in_constraint) and (variable.name in names_in_constraint)):
+				is_part_of_constraint = True
+
+		for constraint in CSP.constraints.mutual_inclusive_constraints:
+
+			"Short circuting"
+			if(is_part_of_constraint):
+				break
+
+			names_in_constraint = [constraint.item1_name, constraint.item2_name]
+			if((unassigned_var.name in names_in_constraint) and (variable.name in names_in_constraint)):
+				is_part_of_constraint = True		
+
+		if(is_part_of_constraint):
+			degree = degree + 1
+
+	return degree
+
 	#TODO add intelligent selection of items
-	#MRV
-	#Degree
 	#LCV
 
 
@@ -551,7 +638,7 @@ def backtrack(assignments, CSP):
 			return "failure"
 
 	"Choose an unassigned variable"
-	current_variable = select_unassigned(assignments)
+	current_variable = select_unassigned_mrv(assignments, CSP)
 
 	"Generate domain values for the chosen variable variable"
 	CSP = generate_domain_values(assignments, CSP)
