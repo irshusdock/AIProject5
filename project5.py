@@ -2,7 +2,8 @@
 "Alexi Kessler & Ian Shusdock"
 
 import sys
-DEBUG = True
+global DEBUG
+DEBUG = False
 
 "Class for an item. All items have a name and a weight"
 "name is the name of the item"
@@ -28,7 +29,7 @@ class Bag:
 
 "Class for the weight capacity constraint of bags"
 "bag is the bag the constraint falls on"
-"All bags must be at least 90% filled (by weight)"
+"All bags must be at least 0% filled (by weight)"
 "All bags must be at most 100% filled (by weight)"
 class Capacity_Constraint:
 	def __init__(self, bag):
@@ -142,8 +143,6 @@ class Unary_Inclusive_Constraint:
 				if(assignment.bag.name in self.list_of_bag_names):
 					return True
 				else:
-					for val in self.list_of_bag_names:
-						print(val)
 					return False
 
 	def print_out(self):
@@ -253,10 +252,6 @@ class Mutual_Inclusive_Constraint:
 			if(assignment.item.name == self.item2_name):
 				bag2 = assignment.get_bag()
 
-		#If item1 is in bag1 and item2 is not in bag2
-		#or if item1 is in bag2 and item2 is not in bag1
-		#or if item2 is in bag1 and item1 is not in bag2
-		#or if item2 is in bag2 and item1 is not in bag 1
 		if((bag1.name == self.bag1_name) and (bag2.name != self.bag2_name)):
 			if (DEBUG):
 				print("Failed mutual inclusive constraint")
@@ -410,12 +405,14 @@ def order_domain_values(current_variable, assignments, CSP):
 "constraints is the set of combined contraints (for the entire problem)"
 "returns a boolean"
 def consistent_with_constraints(current_variable, value, assignments, CSP):
-	print("Running consistency checking")
+	if(DEBUG):
+		print("Running consistency checking")
 	assigned_variables = []
 
 	assignments = update_assignments(assignments, current_variable, value)
 
-	print("--Checking consistent with constraints--")
+	if(DEBUG):
+		print("--Checking consistent with constraints--")
 	for assignment in assignments:
 		if (assignment.bag != None):
 			assigned_variables.append(assignment.item.name)
@@ -424,43 +421,57 @@ def consistent_with_constraints(current_variable, value, assignments, CSP):
 		if (capacity_constraint.check_upper_limit(assignments, CSP.items) == False):
 			assignments = update_assignments(assignments, current_variable, None)
 			return False
-	print("Passed all capacity_constraints")
+
+	if(DEBUG):		
+		print("Passed all capacity_constraints")
 	for fit_constraint in CSP.constraint_container.fit_constraints:
 		if (fit_constraint.check_upper_limit(assignments, CSP.items) == False):
 			assignments = update_assignments(assignments, current_variable, None)
 			return False
-	print("Passed all fits_constraints")
+
+	if(DEBUG):		
+		print("Passed all fits_constraints")
 	for unary_inclusive_constraint in CSP.constraint_container.unary_inclusive_constraints:
 		if (unary_inclusive_constraint.item_name in assigned_variables):	
 			if (unary_inclusive_constraint.check_constraint(assignments) == False):
 				assignments = update_assignments(assignments, current_variable, None)
 				return False
-	print("Passed all unary_inclusive_constraints")
+
+	if(DEBUG):			
+		print("Passed all unary_inclusive_constraints")
 	for unary_exclusive_constraint in CSP.constraint_container.unary_exclusive_constraints:
 		if (unary_exclusive_constraint.item_name in assigned_variables):
 			if (unary_exclusive_constraint.check_constraint(assignments) == False):
 				assignments = update_assignments(assignments, current_variable, None)
 				return False
-	print("Passed all unary_exclusive_constraints")
+
+	if(DEBUG):			
+		print("Passed all unary_exclusive_constraints")
 	for binary_equals_constraint in CSP.constraint_container.binary_equals_constraints:
 		if ((binary_equals_constraint.item1_name in assigned_variables) and (binary_equals_constraint.item2_name in assigned_variables)):
 			if (binary_equals_constraint.check_constraint(assignments) == False):
 				assignments = update_assignments(assignments, current_variable, None)
 				return False
-	print("Passed all binary_equals_constraints")
+
+	if(DEBUG):			
+		print("Passed all binary_equals_constraints")
 	for binary_not_equals_constraint in CSP.constraint_container.binary_not_equals_constraints:
 		if ((binary_not_equals_constraint.item1_name in assigned_variables) and (binary_not_equals_constraint.item2_name in assigned_variables)):
 			if (binary_not_equals_constraint.check_constraint(assignments) == False):
 				assignments = update_assignments(assignments, current_variable, None)
 				return False
-	print("Passed all binary_not_equals_constraint")
+
+	if(DEBUG):			
+		print("Passed all binary_not_equals_constraint")
 	for mutual_inclusive_constraint in CSP.constraint_container.mutual_inclusive_constraints:
 		if ((mutual_inclusive_constraint.item1_name in assigned_variables) and (mutual_inclusive_constraint.item2_name in assigned_variables)):
 			if (mutual_inclusive_constraint.check_constraint(assignments) == False):
 				assignments = update_assignments(assignments, current_variable, None)
 				return False
-	print("Passed all mutual_inclusive_constraints")
-	print("--Passed consistent with constraints--")
+
+	if(DEBUG):			
+		print("Passed all mutual_inclusive_constraints")
+		print("--Passed consistent with constraints--")
 	return True
 
 "Returns the passed list of assignments after updating the assignment of the passed variable"
@@ -479,36 +490,47 @@ def update_assignments(assignments, current_variable, bag):
 "constraints is the set of combined constraints (for the entire problem)"
 "returns a boolean"
 def satisfies_constraints(assignments, CSP):
-	print("--Checking satisfies constraints--")
+
+	if(DEBUG):
+		print("--Checking satisfies constraints--")
 	for capacity_constraint in CSP.constraint_container.capacity_constraints:
 		if (capacity_constraint.check_constraint(assignments, CSP.items) == False):
 			return False
-	print("Passed all capacity_constraints")
+
+	if(DEBUG):		
+		print("Passed all capacity_constraints")
 	for fit_constraint in CSP.constraint_container.fit_constraints:
 		if (fit_constraint.check_constraint(assignments, CSP.items) == False):
 			return False
-	print("Passed all fit_constraints")
+
+	if(DEBUG):		
+		print("Passed all fit_constraints")
 	for unary_inclusive_constraint in CSP.constraint_container.unary_inclusive_constraints:
 		if (unary_inclusive_constraint.check_constraint(assignments) == False):
 			return False
-	print("Passed all unary_inclusive_constraints")
+	if(DEBUG):
+		print("Passed all unary_inclusive_constraints")
 	for unary_exclusive_constraint in CSP.constraint_container.unary_exclusive_constraints:
 		if (unary_exclusive_constraint.check_constraint(assignments) == False):
 			return False
-	print("Passed all unary_exclusive_constraints")
+	if(DEBUG):
+		print("Passed all unary_exclusive_constraints")
 	for binary_equals_constraint in CSP.constraint_container.binary_equals_constraints:
 		if (binary_equals_constraint.check_constraint(assignments) == False):
 			return False
-	print("Passed all binary_equals_constraints")
+	if(DEBUG):
+		print("Passed all binary_equals_constraints")
 	for binary_not_equals_constraint in CSP.constraint_container.binary_not_equals_constraints:
 		if (binary_not_equals_constraint.check_constraint(assignments) == False):
 			return False
-	print("Passed all binary_not_equals_constraints")
+	if(DEBUG):
+		print("Passed all binary_not_equals_constraints")
 	for mutual_inclusive_constraint in CSP.constraint_container.mutual_inclusive_constraints:
 		if (mutual_inclusive_constraint.check_constraint(assignments) == False):
 			return False
-	print("Passed all mutual_inclusive_constraints")
-	print("--Passed satisfies constraints--")
+	if(DEBUG):
+		print("Passed all mutual_inclusive_constraints")
+		print("--Passed satisfies constraints--")
 	return True
 
 "Run backtrack search on the passed assignment and constraints"
@@ -518,7 +540,8 @@ def satisfies_constraints(assignments, CSP):
 "returns a list of assignments if that list satisfies all problem constraints"
 def backtrack(assignments, CSP):
 
-	print ("Running backtrack")
+	if(DEBUG):
+		print ("Running backtrack")
 
 	"If every variable has been assigned, check that the assignment satisfies all constraints. If the assignment does, return it"
 	if(fully_assigned(assignments)):
@@ -592,15 +615,19 @@ def project5_main():
 	"Check for proper number of arguments"
 	if (len(sys.argv) < 2):
 		#TODO fill in proper usage
-		print("Usage is py project5.py ... ... ...")
+		print("Usage is py project5.py <input_file_name> [-v]")
 		sys.exit()
+
+	if(len(sys.argv) == 3):
+		if(sys.argv[2] == "-v"):
+			global DEBUG
+			DEBUG = True
 
 	f = open(sys.argv[1])
 	file_content = f.readlines()
 	f.close()
 	
 	file_content = file_content[1:]
-	print (file_content)
 	index = 0
 
 	"Parse the Items"
@@ -734,10 +761,24 @@ def project5_main():
 
 	print("-----Final Results-----")
 	if (final_assignments == "failure"):
-		print ("Fucking scrub failure")
+		print ("No solution found")
 	else:
-		for assignment in final_assignments:
-			print("Assignment: Item", assignment.item.name, "in Bag", assignment.bag.name)
+		for bag in bags:
+			sum_items = 0
+			sum_weight = 0
+			string_to_output = bag.name + " "
+			list_of_items = []
+			for assignment in assignments:
+				if(assignment.bag == bag):
+					string_to_output += (assignment.item.name + " ")
+					sum_items = sum_items + 1
+					sum_weight = sum_weight + assignment.item.weight
+			string_to_output += ("\n")
+			string_to_output += ("number of items: " + str(sum_items) + "\n")
+			string_to_output += ("total weight: " + str(sum_weight) + "/" + str(bag.weight) + "\n")
+			string_to_output += ("wasted capacity: " + str(bag.weight - sum_weight) + "\n\n")
+			print (string_to_output)
+
 
 	"Handle output"
 
