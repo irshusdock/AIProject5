@@ -484,6 +484,60 @@ def order_domain_values(current_variable, assignments, CSP):
 				print("Ordering domain values")
 			return item.domain
 
+"Order the domain values of the current variable"
+"Use LCV heuristic"
+def order_domain_values_lcv(current_variable, assignments, CSP):
+	unassigned_vars = []
+
+	for assignment in assignments:
+		if(assignment.get_bag() == None):
+			unassigned_vars.append(assignment.item)
+	
+	ordered_domain = []
+	corresponding_counts = []
+
+	for item in CSP.items:
+		if (current_variable.name == item.name):	
+			domain = item.domain
+
+	for value in domain:
+		count = 0
+		if(not consistent_with_constraints(current_variable, value, assignments, CSP)):
+			ordered_domain.append(value)
+			corresponding_counts.append(count)
+			continue
+
+		assignments = update_assignments(assignments, current_variable, value)
+
+		for next_variable in unassigned_vars:
+			
+			for item in CSP.items:
+				if (next_variable.name == item.name):
+					next_domain = item.domain
+
+			for next_value in next_domain:
+				if(consistent_with_constraints(next_variable, next_value, assignments, CSP)):
+					count = count + 1
+
+		index = 0
+		for val in ordered_domain:
+			if(count > corresponding_counts[index]):
+				break
+			index = index + 1
+
+		if(len(ordered_domain) <= index):
+			ordered_domain.append(value)
+			corresponding_counts.append(count)
+		else:	
+			ordered_domain.insert(index, value)
+			corresponding_counts.insert(index, count)
+
+
+		assignments = update_assignments(assignments, current_variable, None)
+
+	return ordered_domain
+
+
 "Return whether or not assigning a particular variable and particular value given a particular assignment causes an inconsistency"
 "Note: Some constraints may still not be satisfied, but it is important that contraints on variables (items) already assigned are satisfied"
 "current_variable is the variable to be assigned (i.e. item)"
@@ -645,7 +699,7 @@ def backtrack(assignments, CSP):
 	CSP = generate_domain_values(assignments, CSP)
 
 	"Order the domain values for the chosen variable"
-	for value in order_domain_values(current_variable, assignments, CSP):
+	for value in order_domain_values_lcv(current_variable, assignments, CSP):
 		if (DEBUG):
 			print ("Testing assigning Item", current_variable.name, "to Bag", value.name)
 
