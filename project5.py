@@ -50,8 +50,8 @@ class Capacity_Constraint:
 						if(item.name == assignment.item.name):
 							sum_weights = sum_weights + item.weight
 							break
-		if(sum_weights * 1.0/self.bag.weight <= 1.0):
-			if(sum_weights * 1.0/self.bag.weight < 0.9):
+		if(sum_weights/self.bag.weight <= 1.0):
+			if(sum_weights/self.bag.weight < 0.9):
 				return False
 		return True
 
@@ -60,13 +60,17 @@ class Capacity_Constraint:
 	"items is the list of Item objects"
 	"returns a boolean"
 	def check_upper_limit(self, assignments, items):
+		sum_weights = 0
+
 		for assignment in assignments:
-			if(assignment.get_bag().get_name() == self.bag.get_name()):
-				for item in items:
-					if(item.get_name() == assignment.item.name):
-						sum_weights = sum_weights + item.get_weight()
-						break
-		if(sum_weights * 1.0/bag.get_weight() <= 1.0):
+			if (assignment.get_bag() != None):
+				if(assignment.get_bag().get_name() == self.bag.get_name()):
+					for item in items:
+						if(item.name == assignment.item.name):
+							sum_weights = sum_weights + item.weight
+							break
+		print("The fucking ratio is", sum_weights/self.bag.weight, "for Bag", self.bag.name, "with weight", self.bag.weight)
+		if(sum_weights/self.bag.weight <= 1.0):
 			return True
 		return False
 
@@ -105,9 +109,10 @@ class Fit_Constraint:
 	def check_upper_limit(self, assignments, items):
 		item_count = 0
 		for assignment in assignments:
-			if(assignment.get_bag().get_name() == self.bag.get_name()):
-				item_count = item_count + 1
-		if(item_count <= self.maximum):
+			if(assignment.bag != None):
+				if(assignment.get_bag().get_name() == self.bag.get_name()):
+					item_count = item_count + 1
+		if(item_count <= self.max):
 			return True
 		return False
 
@@ -240,8 +245,7 @@ class Mutual_Inclusive_Constraint:
 			if(assignment.item.name == self.item2_name):
 				bag2 = assignment.get_bag()
 
-		#TODO, revisit the logic in the last two or statements here
-		if(((bag1.name == self.bag1_name) and (bag2.name == self.bag2_name)) or ((bag1.name == self.bag2_name) and (bag2.name == self.bag1_name)) or (bag1 == "") or (bag2 == "")):
+		if(((bag1.name == self.bag1_name) and (bag2.name == self.bag2_name)) or ((bag1.name == self.bag2_name) and (bag2.name == self.bag1_name)) or (bag1 == None) or (bag2 == None)):
 			return True
 		else:
 			return False
@@ -324,7 +328,7 @@ class CSP_Full:
 "returns a boolean "
 def fully_assigned(assignments):
 	for assignment in assignments:
-		if(assignment.get_bag() == ""):
+		if(assignment.get_bag() == None):
 			return False
 	return True
 
@@ -350,28 +354,22 @@ def select_unassigned(assignments):
 def generate_domain_values(assignments, CSP):
 	for item in CSP.items:
 		domain = []
-		if (DEBUG):
-			print("Constructing domain for item:", item.name)
 
 		for bag in CSP.bags:
-			update_assignments(assignments, item, bag)
-			if (consistent_with_constraints(item, bag, assignments, CSP)):
-				domain.append(bag)
-			else:
-				if (DEBUG):
-					print("Found contradiction. Not adding", bag.name, "to domain")
-		if (DEBUG):
-			print("Domain values for item", item.name, ":")
-			for bag in domain:
-				print("Bag:", bag.get_name())
-		return domain
+			#TODO make this more intelligent, do domain specific checking
+			domain.append(bag)
+		item.domain = domain
+	return CSP
 
 "Order the domain values of the current variable"
 "Return ordered domain"
 def order_domain_values(current_variable, assignments, CSP):
-	#TODO implement ordering schema
-	print("Ordering domain values")
-	return current_variable.domain
+	#TODO implement LCV
+	for item in CSP.items:
+		if (current_variable.name == item.name):	
+			if (DEBUG):
+				print("Ordering domain values")
+			return item.domain
 
 "Return whether or not assigning a particular variable and particular value given a particular assignment causes an inconsistency"
 "Note: Some constraints may still not be satisfied, but it is important that contraints on variables (items) already assigned are satisfied"
@@ -381,15 +379,46 @@ def order_domain_values(current_variable, assignments, CSP):
 "constraints is the set of combined contraints (for the entire problem)"
 "returns a boolean"
 def consistent_with_constraints(current_variable, value, assignments, CSP):
+	print("Running consistency checking")
+	assigned_variables = []
 	for assignment in assignments:
-		if (assignment.item.name == current_variable.name):
-			assignment.value = value
-			if (satisfies_constraints(assignments, CSP)):
-				return True
-			else:
-				assignment.value = ""
+		if (assignment.bag != None):
+			assigned_variables.append(assignment.item.name)
+
+	for capacity_constraint in CSP.constraint_container.capacity_constraints:
+		if (capacity_constraint.check_upper_limit(assignments, CSP.items) == False):
+			return False
+	print("Passed all capacity_constraints")
+	for fit_constraint in CSP.constraint_container.fit_constraints:
+		if (fit_constraint.check_upper_limit(assignments, CSP.items) == False):
+			return False
+	print("Passed all fits_constraints")
+	for unary_inclusive_constraint in CSP.constraint_container.unary_inclusive_constraints:
+		if (unary_inclusive_constraint.item_name in assigned_variables):	
+			if (unary_inclusive_constraint.check_constraint() == False):
 				return False
-	return False
+	print("Passed all unary_inclusive_constraints")
+	for unary_exclusive_constraint in CSP.constraint_container.unary_exclusive_constraints:
+		if (unary_exclusive_constraint.item_name in assigned_variables):
+			if (unary_exclusive_constraint.check_constraint() == False):
+				return False
+	print("Passed all unary_exclusive_constraints")
+	for binary_equals_constraint in CSP.constraint_container.binary_equals_constraints:
+		if ((binary_equals_constraint.item1_name in assigned_variables) and (binary_equals_constraint.item2_name in assigned_variables)):
+			if (binary_equals_constraint.check_constraint() == False):
+				return False
+	print("Passed all binary_equals_constraints")
+	for binary_not_equals_constraint in CSP.constraint_container.binary_not_equals_constraints:
+		if ((binary_not_equals_constraint.item1_name in assigned_variables) and (binary_not_equals_constraint.item2_name in assigned_variables)):
+			if (binary_not_equals_constraint.check_constraint() == False):
+				return False
+	print("Passed all binary_not_equals_constraint")
+	for mutual_inclusive_constraint in CSP.constraint_container.mutual_inclusive_constraints:
+		if ((mutual_inclusive_constraint.item1_name in assigned_variables) and (mutual_inclusive_constraint.item2_name in assigned_variables)):
+			if (mutual_inclusive_constraint.check_constraint() == False):
+				return False
+	print("Passed all mutual_inclusive_constraints")
+	return True
 
 "Returns the passed list of assignments after updating the assignment of the passed variable"
 "assignments is the current list of item-bag assignments to update"
@@ -400,7 +429,7 @@ def update_assignments(assignments, current_variable, bag):
 	for assignment in assignments:
 		if(assignment.item.name == current_variable.name):
 			assignment.set_bag(bag)
-			return
+			return assignments
 
 "Checks if the given variable assignments satisfy all problem constraints"
 "assignments is the list of item-bag assignments"
@@ -443,31 +472,45 @@ def backtrack(assignments, CSP):
 	if(fully_assigned(assignments)):
 		if(satisfies_constraints(assignments, CSP)):
 			return assignments
+		else:
+			return "failure"
 
 	"Choose an unassigned variable"
 	current_variable = select_unassigned(assignments)
 
 	"Generate domain values for the chosen variable variable"
-	generate_domain_values(assignments, CSP)
+	CSP = generate_domain_values(assignments, CSP)
 
 	"Order the domain values for the chosen variable"
-	for value in order_domain_values(current_variable, assignments, CSP.constraint_container):
+	for value in order_domain_values(current_variable, assignments, CSP):
+		if (DEBUG):
+			print ("Testing assigning Item", current_variable.name, "to Bag", value.name)
 
 		"Check if the value chosen is consistent with the rest of the assignments so far"
 		if (consistent_with_constraints(current_variable, value, assignments, CSP)):	
 
 			"If it is consistent, assign the variable that value to run backtrack using the new assignment"
 			assignments = update_assignments(assignments, current_variable, value)
-			result = backtrack(assignments, CSP.constraint_container)
+			result = backtrack(assignments, CSP)
 			
 			"If backtrack returns an assignment, we have found a solution so cascade up"
 			if(result != "failure"):
+				if (DEBUG):
+					print("Assigned item", current_variable.name, "to bag", value.name)
 				return result
 
 			"Otherwise remove that item-bag assignment"
-			assignments.update_assignments(assignments, current_variable, None)
+			assignments = update_assignments(assignments, current_variable, None)
 		
-
+		else:
+			print("Failed to assign Item", current_variable.name, "to Bag", value.name)
+	if (DEBUG):
+		print("Failed with assignments")
+		for assignment in assignments:
+			if (assignment.bag == None):
+				print ("Assignment: Item", assignment.item.name, " not in a Bag")
+			else:
+				print ("Assignment: Item", assignment.item.name, " in Bag", assignment.bag.name)
 	"Return failure if all possible values have been checked. There is no solution for the given assignment"
 	return "failure"
 
@@ -502,7 +545,7 @@ def project5_main():
 	f.close()
 	
 	file_content = file_content[1:]
-
+	print (file_content)
 	index = 0
 
 	"Parse the Items"
@@ -510,25 +553,28 @@ def project5_main():
 		index = index + 1
 		if(line[0] == "#"):
 			break
-		items.append(Item(line[0], line[2]))
+		temp = line.split(" ")
+		items.append(Item(temp[0], temp[1]))
 
 	"Update CSP"
 	CSP.items = items
 	"Reset file_content and index"
 	file_content = file_content[index:]
+	index = 0
 
 	"Parse the Bags"
 	for line in file_content:
 		index = index + 1
 		if(line[0] == "#"):
 			break
-		bags.append(Bag(line[0], line[2]))
+		temp = line.split(" ")
+		bags.append(Bag(temp[0], temp[1]))
 		
 	"Update CSP"
 	CSP.bags = bags
 	"Reset file_content and index"
 	file_content = file_content[index:]
-	index = 0
+
 
 	"Set the capacity constraints"
 	for bag in bags:
@@ -539,7 +585,6 @@ def project5_main():
 
 	"Add item fit constraints if there are any"
 	if(file_content[0][0] != "#"):
-		print(file_content[0])
 		for bag in bags:
 			fit_constraints.append(Fit_Constraint(bag, file_content[0][0], file_content[0][2]))
 		file_content = file_content[2:]
@@ -617,8 +662,9 @@ def project5_main():
 
 	"Make sure that all constraints were parsed correctly"
 	if (DEBUG):
+		print("-----Printing constraints-----")
 		constraint_container.print_constraints()
-
+		print("-----Running script-----")
 	"Update container"
 	CSP.constraint_container = constraint_container
 
@@ -629,8 +675,14 @@ def project5_main():
 
 	#TODO
 	"Run backtrace using the blank assignments and the set of contraints"
-	backtrack(assignments, CSP)
+	final_assignments = backtrack(assignments, CSP)
 
+	print("-----Final Results-----")
+	if (final_assignments == "failure"):
+		print ("Fucking scrub failure")
+	else:
+		for assignment in final_assignments:
+			print("Assignment: Item", assignment.item.name, "in Bag", assignment.bag.name)
 
 	"Handle output"
 
