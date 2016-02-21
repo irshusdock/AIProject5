@@ -379,7 +379,7 @@ def select_unassigned_mrv(assignments, CSP):
 	for assignment in assignments:
 		if(assignment.get_bag() == None):
 			unassigned_vars.append(assignment.item)
-
+			
 	min_value = sys.maxsize
 	for variable in unassigned_vars:
 		temp = number_of_legal_values(variable, assignments, CSP)
@@ -556,6 +556,7 @@ def consistent_with_constraints(current_variable, value, assignments, CSP):
 				assignments = update_assignments(assignments, current_variable, None)
 				return False
 
+	assignments = update_assignments(assignments, current_variable, None)
 	if(DEBUG):			
 		print("Passed all mutual_inclusive_constraints")
 		print("--Passed consistent with constraints--")
