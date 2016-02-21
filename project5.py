@@ -693,12 +693,15 @@ def backtrack(assignments, CSP):
 			return "failure"
 
 	"Choose an unassigned variable"
+	"MRV + Degree or NOT"
 	current_variable = select_unassigned_mrv(assignments, CSP)
 
 	"Generate domain values for the chosen variable variable"
 	CSP = generate_domain_values(assignments, CSP)
 
+
 	"Order the domain values for the chosen variable"
+	"LCV or NOT"
 	for value in order_domain_values_lcv(current_variable, assignments, CSP):
 		if (DEBUG):
 			print ("Testing assigning Item", current_variable.name, "to Bag", value.name)
