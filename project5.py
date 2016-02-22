@@ -353,6 +353,7 @@ class CSP_Full:
 		self.items = items
 		self.bags = bags
 		self.constraints = constraint_container
+		self.generated = False
 	
 "---------------------End Class definitions, begin function definitions---------------------"
 
@@ -472,6 +473,8 @@ def degree_of_var(variable, unassigned_vars, CSP):
 "constraints is the set of combined constraints (for the entire problem)"
 "returns a list"
 def generate_domain_values(assignments, CSP):
+	if(CSP.generated):
+		return CSP
 	for item in CSP.items:
 		domain = []
 
@@ -479,6 +482,7 @@ def generate_domain_values(assignments, CSP):
 			#TODO make this more intelligent, do domain specific checking
 			domain.append(bag)
 		item.domain = domain
+	CSP.generated = True
 	return CSP
 
 "Order the domain values of the current variable"
@@ -543,7 +547,6 @@ def order_domain_values_lcv(current_variable, assignments, CSP):
 		assignments = update_assignments(assignments, current_variable, None)
 
 	return ordered_domain
-
 
 "Return whether or not assigning a particular variable and particular value given a particular assignment causes an inconsistency"
 "Note: Some constraints may still not be satisfied, but it is important that contraints on variables (items) already assigned are satisfied"
@@ -682,6 +685,63 @@ def satisfies_constraints(assignments, CSP):
 		print("--Passed satisfies constraints--")
 	return True
 
+
+"Prune potential domain values using forward checking"
+"assignments is the current item bag assignments"
+"current_variable is the most recently assigned variable (to use for domain reduction)"
+"value is the value current_variable was assigned"
+"CSP is the constraint satisfaction problem"
+def forward_checking(assignments, current_variable, value, CSP):
+	unassigned_vars = []
+
+	for assignment in assignments:
+		if(assignment.get_bag() == None):
+			unassigned_vars.append(assignment.item)
+
+	for unassigned_variable in unassigned_vars:
+		for item in CSP.items:
+			if(item.name == current_variable.name):
+				variable_domain = item.domain
+				break
+
+		for constraint in CSP.constraints.binary_equals_constraints:
+			names_in_constraint = [constraint.item1_name, constraint.item2_name]
+			if((unassigned_variable.name in names_in_constraint) and (current_variable.name in names_in_constraint)):
+				if(value in variable_domain):
+					variable_domain = [value]
+				else:
+					variable_domain = []
+
+		for constraint in CSP.constraints.binary_not_equals_constraints:
+			names_in_constraint = [constraint.item1_name, constraint.item2_name]
+			if((unassigned_variable.name in names_in_constraint) and (current_variable.name in names_in_constraint)):
+				if(value in variable_domain):
+					variable_domain = variable_domain.remove(value)
+		
+		for constraint in CSP.constraints.mutual_inclusive_constraints:
+			names_in_constraint = [constraint.item1_name, constraint.item2_name]
+			bags_in_constraint = [constraint.bag1_name, constraint.bag2_name]
+
+			if((unassigned_variable.name in names_in_constraint) and (current_variable.name in names_in_constraint)):
+				if(value == bags_in_constraint[0]):
+					if(bags_in_constraint[1] in variable_domain):
+						variable_domain = [bags_in_constraint[1]]
+					else:
+						variable_domain = []
+				if(value == bags_in_constraint[1]):
+					if(bags_in_constraint[0] in variable_domain):
+						variable_domain = [bags_in_constraint[0]]
+					else:
+						variable_domain = []
+
+		for item in CSP.items:
+			if(item.name == current_variable.name):
+				item.domain = variable_domain
+				break
+
+	return CSP
+
+
 "Run backtrack search on the passed assignment and constraints"
 "assignments is the list of item-bag assignments"
 "constraints is the set of combined constraints (for the entire problem)"
@@ -709,7 +769,6 @@ def backtrack(assignments, CSP):
 	"Generate domain values for the chosen variable variable"
 	CSP = generate_domain_values(assignments, CSP)
 
-
 	"Order the domain values for the chosen variable"
 	"LCV or NOT"
 	if (LCV):
@@ -725,6 +784,10 @@ def backtrack(assignments, CSP):
 
 			"If it is consistent, assign the variable that value to run backtrack using the new assignment"
 			assignments = update_assignments(assignments, current_variable, value)
+
+			"Run forward checking"
+			CSP = forward_checking(assignments, current_variable, value, CSP)
+
 			if (DEBUG):
 				print("Assigned Item", current_variable.name, "to Bag", value.name)
 			result = backtrack(assignments, CSP)
