@@ -3,14 +3,18 @@
 
 import sys
 import time
+import math
+
 global DEBUG
 global MRV
 global LCV
+global FC
 global TIME
 DEBUG = False
 MRV = False
 LCV = False
 TIME = False
+FC = False
 
 "Class for an item. All items have a name and a weight"
 "name is the name of the item"
@@ -59,7 +63,8 @@ class Capacity_Constraint:
 							sum_weights = sum_weights + item.weight
 							break
 		if(sum_weights/self.bag.weight <= 1.0):
-			return True
+			if (sum_weights >= math.floor(self.bag.weight*0.9)):
+				return True
 		if (DEBUG):
 				print("Capacity check constraint failed with ratio", sum_weights/self.bag.weight)
 		return False
@@ -510,7 +515,6 @@ def order_domain_values_lcv(current_variable, assignments, CSP):
 	for item in CSP.items:
 		if (current_variable.name == item.name):	
 			domain = item.domain
-
 	for value in domain:
 		count = 0
 		if(not consistent_with_constraints(current_variable, value, assignments, CSP)):
@@ -699,6 +703,8 @@ def forward_checking(assignments, current_variable, value, CSP):
 			unassigned_vars.append(assignment.item)
 
 	for unassigned_variable in unassigned_vars:
+
+		variable_domain = []
 		for item in CSP.items:
 			if(item.name == current_variable.name):
 				variable_domain = item.domain
@@ -717,6 +723,8 @@ def forward_checking(assignments, current_variable, value, CSP):
 			if((unassigned_variable.name in names_in_constraint) and (current_variable.name in names_in_constraint)):
 				if(value in variable_domain):
 					variable_domain = variable_domain.remove(value)
+					if(variable_domain is None):
+						variable_domain = []
 		
 		for constraint in CSP.constraints.mutual_inclusive_constraints:
 			names_in_constraint = [constraint.item1_name, constraint.item2_name]
@@ -785,8 +793,9 @@ def backtrack(assignments, CSP):
 			"If it is consistent, assign the variable that value to run backtrack using the new assignment"
 			assignments = update_assignments(assignments, current_variable, value)
 
-			"Run forward checking"
-			CSP = forward_checking(assignments, current_variable, value, CSP)
+			if (FC):
+				"Run forward checking"
+				CSP = forward_checking(assignments, current_variable, value, CSP)
 
 			if (DEBUG):
 				print("Assigned Item", current_variable.name, "to Bag", value.name)
@@ -858,6 +867,9 @@ def project5_main():
 		if ("-t" in additional_args):
 			global TIME
 			TIME = True
+		if ("-fc" in additional_args):
+			global FC
+			FC = True
 		
 
 	f = open(sys.argv[1])
