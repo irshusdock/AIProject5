@@ -2,8 +2,15 @@
 "Alexi Kessler & Ian Shusdock"
 
 import sys
+import time
 global DEBUG
+global MRV
+global LCV
+global TIME
 DEBUG = False
+MRV = False
+LCV = False
+TIME = False
 
 "Class for an item. All items have a name and a weight"
 "name is the name of the item"
@@ -694,7 +701,10 @@ def backtrack(assignments, CSP):
 
 	"Choose an unassigned variable"
 	"MRV + Degree or NOT"
-	current_variable = select_unassigned_mrv(assignments, CSP)
+	if (MRV):
+		current_variable = select_unassigned_mrv(assignments, CSP)
+	else:
+		current_variable = select_unassigned(assignments)
 
 	"Generate domain values for the chosen variable variable"
 	CSP = generate_domain_values(assignments, CSP)
@@ -702,7 +712,11 @@ def backtrack(assignments, CSP):
 
 	"Order the domain values for the chosen variable"
 	"LCV or NOT"
-	for value in order_domain_values_lcv(current_variable, assignments, CSP):
+	if (LCV):
+		ordered_domain_values = order_domain_values_lcv(current_variable, assignments, CSP)
+	else:
+		ordered_domain_values = order_domain_values(current_variable, assignments, CSP)
+	for value in ordered_domain_values:
 		if (DEBUG):
 			print ("Testing assigning Item", current_variable.name, "to Bag", value.name)
 
@@ -760,13 +774,28 @@ def project5_main():
 	"Check for proper number of arguments"
 	if (len(sys.argv) < 2):
 		#TODO fill in proper usage
-		print("Usage is py project5.py <input_file_name> [-v]")
+		print("Usage is py project5.py <input_file_name> [-v] [-mrv] [-lcv] [-t]")
 		sys.exit()
 
-	if(len(sys.argv) == 3):
-		if(sys.argv[2] == "-v"):
+	if(len(sys.argv) > 2):
+		additional_args = []
+		counter = 2
+		while (counter < len(sys.argv)):
+			additional_args.append(sys.argv[counter])
+			counter+=1
+		if("-v" in additional_args):
 			global DEBUG
 			DEBUG = True
+		if ("-mrv" in additional_args):
+			global MRV
+			MRV = True
+		if ("-lcv" in additional_args):
+			global LCV
+			LCV = True
+		if ("-t" in additional_args):
+			global TIME
+			TIME = True
+		
 
 	f = open(sys.argv[1])
 	file_content = f.readlines()
@@ -900,9 +929,16 @@ def project5_main():
 		new_assignment = Assignment(item, None)
 		assignments.append(new_assignment)
 
+	if (TIME):
+		start_time = time.clock()
+
 	#TODO
 	"Run backtrace using the blank assignments and the set of contraints"
 	final_assignments = backtrack(assignments, CSP)
+
+	if (TIME):
+		elapsed_time = (time.clock() * 1000)
+		print("\nBacktracking took", elapsed_time, "ms\n")
 
 	print("-----Final Results-----")
 	if (final_assignments == "failure"):
